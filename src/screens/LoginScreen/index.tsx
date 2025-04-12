@@ -69,7 +69,7 @@ const LoginScreen = () => {
         Bienvenido a
       </Text>
       <Image
-        source={require("../../../assets/images/tremma-lg.png")}
+        source={require("../../assets/images/tremma-lg.png")}
         style={{ width: 160, height: 120, alignSelf: "center" }}
       />
       <Text style={{ ...styles.center, marginBottom: 40 }}>

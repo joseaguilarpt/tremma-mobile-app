@@ -43,7 +43,7 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
       const response = await getCommunications({ userId: user?.id });
       const messagesList = response.map((item) => ({
         ...item,
-        Fecha: dayjs(item.Fecha).format("lll"),
+        Fecha: item.Fecha,
       }));
 
       setMessages(messagesList ?? []);

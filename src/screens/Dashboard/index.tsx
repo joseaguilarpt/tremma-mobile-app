@@ -1,42 +1,86 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Image } from "react-native";
 import {
   Text,
   useTheme,
-  Appbar,
-  Avatar,
+  Surface,
+  Icon,
+  TouchableRipple,
 } from "react-native-paper";
-import { useAuth } from "@/context/auth";
+import { useNavigation } from "@react-navigation/native";
+import NavigationBar from "@/components/NavigationBar/NavigationBar";
 
+const Spacer = ({ size = 8, horizontal = false }) => (
+  <View style={{ [horizontal ? "width" : "height"]: size }} />
+);
 
 function Dashboard() {
   const theme = useTheme();
-  const { imageSrc, user } = useAuth();
-
-  const _handleMore = () => console.log("Shown more");
-
+  const navigator = useNavigation();
   return (
     <View>
-      <Appbar.Header>
-        {imageSrc && (
-          <Avatar.Image
-            style={styles.avatar}
-            size={40}
-            source={{ uri: imageSrc }}
-          />
-        )}
-        {!imageSrc && user?.name && (
-          <Avatar.Text
-            style={styles.avatar}
-            size={40}
-            label={user.name.charAt(0)}
-          />
-        )}
-        <Appbar.Content title="" />
-        <Appbar.Action icon="message" onPress={_handleMore} />
-      </Appbar.Header>
+      <NavigationBar />
       <View style={styles.container}>
         <Text variant="titleLarge">Bienvenido a Tremma</Text>
+        <Surface style={styles.surface} elevation={4}>
+          <Image
+            source={require("../../assets/images/tremma-car.png")}
+            style={styles.truck}
+          />
+        </Surface>
+        <View style={styles.cards}>
+          <TouchableRipple
+            onPress={() => navigator.navigate("casa")}
+            rippleColor="rgb(67, 170, 177)"
+          >
+            <Surface style={styles.cardTop} elevation={4}>
+              <View>
+                <Icon source="bus" size={40} color={theme.colors.onPrimary} />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="titleLarge">Hojas de Ruta</Text>
+                <Text variant="bodyMedium">Viajes pendientes</Text>
+                <Text variant="bodyMedium">Viajes realizados</Text>
+              </View>
+            </Surface>
+          </TouchableRipple>
+          <Spacer size={20} />
+          <TouchableRipple
+            onPress={() => navigator.navigate("casa")}
+            rippleColor="rgb(67, 170, 177)"
+          >
+            <Surface style={styles.card} elevation={4}>
+              <View>
+                <Icon
+                  source="barcode"
+                  size={40}
+                  color={theme.colors.onPrimary}
+                />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="titleLarge">Pedidos</Text>
+                <Text variant="bodyMedium">Viajes pendientes</Text>
+                <Text variant="bodyMedium">Viajes realizados</Text>
+              </View>
+            </Surface>
+          </TouchableRipple>
+          <Spacer size={20} />
+          <TouchableRipple
+            onPress={() => navigator.navigate("casa")}
+            rippleColor="rgb(67, 170, 177)"
+          >
+            <Surface style={styles.card} elevation={4}>
+              <View>
+                <Icon source="cash" size={40} color={theme.colors.onPrimary} />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="titleLarge">Gestion de Pagos</Text>
+                <Text variant="bodyMedium">Viajes pendientes</Text>
+                <Text variant="bodyMedium">Viajes realizados</Text>
+              </View>
+            </Surface>
+          </TouchableRipple>
+        </View>
       </View>
     </View>
   );
@@ -63,6 +107,40 @@ const styles = StyleSheet.create({
   flex: {
     paddingLeft: 20,
     // display: 'flex'
+  },
+  surface: {
+    height: 200,
+    marginTop: 20,
+    backgroundColor: "rgba(46, 64, 82, 0.8)",
+    borderRadius: 10,
+  },
+  truck: {
+    width: 400,
+    height: 200,
+    alignSelf: "center",
+    resizeMode: "contain",
+  },
+  cards: {
+    marginTop: 20,
+    display: "flex",
+    //flexDirection: "row",
+    //alignItems: "center",
+  },
+  card: {
+    backgroundColor: "rgba(46, 64, 82, 0.8)",
+    borderRadius: 10,
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  cardTop: {
+    backgroundColor: "rgba(255, 74, 2, 0.8)",
+    borderRadius: 10,
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
   },
 });
 

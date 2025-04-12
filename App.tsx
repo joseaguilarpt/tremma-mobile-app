@@ -23,6 +23,9 @@ import ErrorBoundary from "./src/components/ErrorBoundary";
 import LoginScreen from "@/screens/LoginScreen";
 import AppProviders from "@/context/providers";
 import ChangePassword from "@/screens/Account/ChangePassword";
+import Messages from "@/screens/Messages/Messages";
+import SettingsScreen from "@/screens/Settings";
+import AddMessage from "@/screens/Messages/AddMessage";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -48,6 +51,21 @@ function Router() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="Cuenta"
+        component={HomeView}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Messages"
+        component={Messages}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddMessage"
+        component={AddMessage}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="NotFound"
         component={NotFoundScreen}
         options={{ headerShown: false }}
@@ -59,7 +77,7 @@ function Router() {
 export default function App() {
   const [appIsReady, setAppIsReady] = React.useState(false);
   const [fontsLoaded] = useFonts({
-    "Futura-Bold": require("./assets/fonts/Futura-Bold.otf"),
+    "Futura-Bold": require("./src/assets/fonts/Futura-Bold.otf"),
   });
   React.useEffect(() => {
     async function prepare() {
