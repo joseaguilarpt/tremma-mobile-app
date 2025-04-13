@@ -30,7 +30,7 @@ function Dashboard() {
         </Surface>
         <View style={styles.cards}>
           <TouchableRipple
-            onPress={() => navigator.navigate("casa")}
+            onPress={() => navigator.navigate("Home")}
             rippleColor="rgb(67, 170, 177)"
           >
             <Surface style={styles.cardTop} elevation={4}>
@@ -39,14 +39,14 @@ function Dashboard() {
               </View>
               <View style={styles.flex}>
                 <Text variant="titleLarge">Hojas de Ruta</Text>
-                <Text variant="bodyMedium">Viajes pendientes</Text>
-                <Text variant="bodyMedium">Viajes realizados</Text>
+                <Text variant="bodyMedium">Hojas pendientes</Text>
+                <Text variant="bodyMedium">Hojas cerradas</Text>
               </View>
             </Surface>
           </TouchableRipple>
           <Spacer size={20} />
           <TouchableRipple
-            onPress={() => navigator.navigate("casa")}
+            onPress={() => navigator.navigate("Home")}
             rippleColor="rgb(67, 170, 177)"
           >
             <Surface style={styles.card} elevation={4}>
@@ -59,14 +59,14 @@ function Dashboard() {
               </View>
               <View style={styles.flex}>
                 <Text variant="titleLarge">Pedidos</Text>
-                <Text variant="bodyMedium">Viajes pendientes</Text>
-                <Text variant="bodyMedium">Viajes realizados</Text>
+                <Text variant="bodyMedium">Pedidos pendientes</Text>
+                <Text variant="bodyMedium">Pedidos completados</Text>
               </View>
             </Surface>
           </TouchableRipple>
           <Spacer size={20} />
           <TouchableRipple
-            onPress={() => navigator.navigate("casa")}
+            onPress={() => navigator.navigate("Home")}
             rippleColor="rgb(67, 170, 177)"
           >
             <Surface style={styles.card} elevation={4}>
@@ -75,8 +75,8 @@ function Dashboard() {
               </View>
               <View style={styles.flex}>
                 <Text variant="titleLarge">Gestion de Pagos</Text>
-                <Text variant="bodyMedium">Viajes pendientes</Text>
-                <Text variant="bodyMedium">Viajes realizados</Text>
+                <Text variant="bodyMedium">Pagos pendientes</Text>
+                <Text variant="bodyMedium">Pagos realizados</Text>
               </View>
             </Surface>
           </TouchableRipple>
