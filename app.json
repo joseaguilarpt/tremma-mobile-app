@@ -23,7 +23,8 @@
         "foregroundImage": "./src/assets/images/android-icon-96x96.png",
         "backgroundColor": "#1e1847"
       },
-      "package": "com.joseaguilarpt.tremmamobileapp"
+      "package": "com.joseaguilarpt.tremmamobileapp",
+      "permissions": ["RECEIVE_BOOT_COMPLETED"]
     },
     "web": {
       "bundler": "metro",
