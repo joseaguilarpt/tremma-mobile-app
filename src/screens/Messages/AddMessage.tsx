@@ -45,8 +45,6 @@ export default function AddMessage() {
     subject: "",
   });
 
-  console.log(formState)
-
   const [receivedMessage, setReceivedMessage] = React.useState({
     sender: "",
     message: "",
@@ -156,7 +154,6 @@ export default function AddMessage() {
         };
 
 
-        console.log(JSON.stringify(payload, null, 2))
         const api = postUserMessage;
         await api(payload);
         showSnackbar("Mensaje enviado exitosamente.", "success");
@@ -164,7 +161,6 @@ export default function AddMessage() {
           navigator.navigate("Messages");
         }, 500);
       } catch (err) {
-        console.log(err)
         const errorMessage = parseErrors(err?.response?.data);
         let message =
           "Error al guardar el mensaje. Por favor, intenta nuevamente.";

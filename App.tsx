@@ -26,6 +26,7 @@ import ChangePassword from "@/screens/Account/ChangePassword";
 import Messages from "@/screens/Messages/Messages";
 import SettingsScreen from "@/screens/Settings";
 import AddMessage from "@/screens/Messages/AddMessage";
+import { navigationRef } from "@/utils/navigation";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -134,7 +135,7 @@ export default function App() {
     colorScheme === "dark" ? CombinedDarkTheme : CombinedDefaultTheme;
   return (
     <PaperProvider theme={theme}>
-      <NavigationContainer theme={theme}>
+      <NavigationContainer theme={theme} ref={navigationRef}>
         <ErrorBoundary>
           <AppProviders>
             <Router />

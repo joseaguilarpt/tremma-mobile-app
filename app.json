@@ -7,7 +7,7 @@
     "icon": "./src/assets/images/tremma-lg.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -18,6 +18,7 @@
       "backgroundColor": "#1f223a"
     },
     "android": {
+      "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/android-icon-96x96.png",
         "backgroundColor": "#1e1847"
@@ -32,14 +33,13 @@
     "plugins": [
       "expo-router",
       "expo-splash-screen",
-      "@morrowdigital/watermelondb-expo-plugin",
-      "expo-sqlite",
       [
-        "expo-asset",
+        "expo-font",
         {
           "assets": ["./src/assets/fonts/"]
         }
-      ]
+      ],
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true

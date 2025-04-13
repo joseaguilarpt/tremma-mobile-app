@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_URL } from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { navigate } from "@/utils/navigation";
 
 const api = axios.create({
   baseURL: API_URL, // Replace with your backend URL
@@ -197,6 +198,7 @@ api.interceptors.response.use(
 
         // Handle navigation to login screen (React Navigation)
         console.error("Session expired. Redirecting to login.");
+        navigate("Login");
         throw refreshError; // Let the app handle navigation outside this service
       } finally {
         // Reset the retry flag once the refresh is complete
