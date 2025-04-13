@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -36,7 +36,7 @@ function SettingsScreen() {
   };
 
   return (
-    <View>
+    <ScrollView>
       <Appbar.Header>
         <Appbar.Content title="Cuenta de Usuario:" />
       </Appbar.Header>
@@ -90,7 +90,7 @@ function SettingsScreen() {
           Cerrar Sesion
         </Button>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
 import {
   Keyboard,
+  ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -153,7 +154,6 @@ export default function AddMessage() {
           confirmado: false,
         };
 
-
         const api = postUserMessage;
         await api(payload);
         showSnackbar("Mensaje enviado exitosamente.", "success");
@@ -184,140 +184,144 @@ export default function AddMessage() {
   }, []);
 
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => navigator.navigate("Messages")} />
-          <Appbar.Content title={id ? "Ver Mensaje" : "Nuevo Mensaje"} />
-        </Appbar.Header>
-        <View style={styles.container}>
-          {!id && (
-            <UserSelect
-              error={!!errors.receiver}
-              helperText={errors.receiver}
-              name="receiver"
-              label="Enviar a:"
-              onChange={handleInputChange}
-            />
-          )}
-          {id && (
-            <View>
-              <Title style={{ marginBottom: 10, fontWeight: "bold" }}>
-                Asunto: {receivedMessage?.subject}
-              </Title>
-              <Text style={styles.bold}>Enviado por:</Text>
-              <Text style={{ marginBottom: 10 }}>
-                {receivedMessage?.sender ?? "-"}
-              </Text>
-              <Text style={styles.bold}>Fecha de envío:</Text>
-              <Text style={{ marginBottom: 10 }}>
-                {receivedMessage?.date ?? "-"}
-              </Text>
-              <Divider style={{ marginVertical: 16 }} />
-              <Text style={[styles.bold]}>Mensaje:</Text>
-              <Text variant="bodyLarge">{receivedMessage?.message ?? "-"}</Text>
-              <Divider style={{ marginVertical: 16 }} />
-              {!sendResponse && (
+    <ScrollView>
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <View>
+          <Appbar.Header>
+            <Appbar.BackAction onPress={() => navigator.navigate("Messages")} />
+            <Appbar.Content title={id ? "Ver Mensaje" : "Nuevo Mensaje"} />
+          </Appbar.Header>
+          <View style={styles.container}>
+            {!id && (
+              <UserSelect
+                error={!!errors.receiver}
+                helperText={errors.receiver}
+                name="receiver"
+                label="Enviar a:"
+                onChange={handleInputChange}
+              />
+            )}
+            {id && (
+              <View>
+                <Title style={{ marginBottom: 10, fontWeight: "bold" }}>
+                  Asunto: {receivedMessage?.subject}
+                </Title>
+                <Text style={styles.bold}>Enviado por:</Text>
+                <Text style={{ marginBottom: 10 }}>
+                  {receivedMessage?.sender ?? "-"}
+                </Text>
+                <Text style={styles.bold}>Fecha de envío:</Text>
+                <Text style={{ marginBottom: 10 }}>
+                  {receivedMessage?.date ?? "-"}
+                </Text>
+                <Divider style={{ marginVertical: 16 }} />
+                <Text style={[styles.bold]}>Mensaje:</Text>
+                <Text variant="bodyLarge">
+                  {receivedMessage?.message ?? "-"}
+                </Text>
+                <Divider style={{ marginVertical: 16 }} />
+                {!sendResponse && (
+                  <View
+                    style={{ flexDirection: "row", justifyContent: "flex-end" }}
+                  >
+                    <Button
+                      onPress={handleConfirm}
+                      disabled={isLoading}
+                      style={{ marginRight: 10 }}
+                    >
+                      Confirmar
+                    </Button>
+                    <Button
+                      disabled={isLoading}
+                      onPress={() => setSendResponse(true)}
+                      mode="contained"
+                    >
+                      Responder
+                    </Button>
+                  </View>
+                )}
+              </View>
+            )}
+            {sendResponse && (
+              <View style={{ marginTop: 20 }}>
+                {id && (
+                  <Title style={{ marginBottom: 10, fontWeight: "bold" }}>
+                    Responder:
+                  </Title>
+                )}
+                <TextInput
+                  mode="outlined"
+                  label={"Asunto"}
+                  error={errors["subject"]}
+                  onChangeText={(e) => handleInputChange("subject", e)}
+                />
+                {errors["subject"] && (
+                  <HelperText type="error" visible={errors["subject"]}>
+                    {errors["subject"]}
+                  </HelperText>
+                )}
+                <TextInput
+                  onChangeText={(e) => handleInputChange("message", e)}
+                  multiline={true}
+                  numberOfLines={3}
+                  style={{
+                    marginTop: 10,
+                    height: 100, // Ajusta la altura manualmente
+                  }}
+                  error={errors["message"]}
+                  mode="outlined"
+                  label={"Mensaje"}
+                />
+                {errors["message"] && (
+                  <HelperText type="error" visible={errors["message"]}>
+                    {errors["message"]}
+                  </HelperText>
+                )}
                 <View
-                  style={{ flexDirection: "row", justifyContent: "flex-end" }}
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-end",
+                    marginTop: 20,
+                  }}
                 >
                   <Button
-                    onPress={handleConfirm}
                     disabled={isLoading}
+                    onPress={() => {
+                      setSendResponse(false);
+                      setFormState((v) => ({
+                        ...v,
+                        message: "",
+                        subject: "",
+                      }));
+                    }}
                     style={{ marginRight: 10 }}
                   >
-                    Confirmar
+                    Cancelar
                   </Button>
+                  {id && (
+                    <Button
+                      mode="outlined"
+                      onPress={handleConfirm}
+                      disabled={isLoading}
+                      style={{ marginRight: 10 }}
+                    >
+                      Confirmar
+                    </Button>
+                  )}
                   <Button
+                    onPress={handleSave}
                     disabled={isLoading}
-                    onPress={() => setSendResponse(true)}
                     mode="contained"
                   >
-                    Responder
+                    Enviar Mensaje
                   </Button>
                 </View>
-              )}
-            </View>
-          )}
-          {sendResponse && (
-            <View style={{ marginTop: 20 }}>
-              {id && (
-                <Title style={{ marginBottom: 10, fontWeight: "bold" }}>
-                  Responder:
-                </Title>
-              )}
-              <TextInput
-                mode="outlined"
-                label={"Asunto"}
-                error={errors["subject"]}
-                onChangeText={(e) => handleInputChange("subject", e)}
-              />
-              {errors["subject"] && (
-                <HelperText type="error" visible={errors["subject"]}>
-                  {errors["subject"]}
-                </HelperText>
-              )}
-              <TextInput
-                onChangeText={(e) => handleInputChange("message", e)}
-                multiline={true}
-                numberOfLines={3}
-                style={{
-                  marginTop: 10,
-                  height: 100, // Ajusta la altura manualmente
-                }}
-                error={errors["message"]}
-                mode="outlined"
-                label={"Mensaje"}
-              />
-              {errors["message"] && (
-                <HelperText type="error" visible={errors["message"]}>
-                  {errors["message"]}
-                </HelperText>
-              )}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "flex-end",
-                  marginTop: 20,
-                }}
-              >
-                <Button
-                  disabled={isLoading}
-                  onPress={() => {
-                    setSendResponse(false);
-                    setFormState((v) => ({
-                      ...v,
-                      message: "",
-                      subject: "",
-                    }));
-                  }}
-                  style={{ marginRight: 10 }}
-                >
-                  Cancelar
-                </Button>
-                {id && (
-                  <Button
-                    mode="outlined"
-                    onPress={handleConfirm}
-                    disabled={isLoading}
-                    style={{ marginRight: 10 }}
-                  >
-                    Confirmar
-                  </Button>
-                )}
-                <Button
-                  onPress={handleSave}
-                  disabled={isLoading}
-                  mode="contained"
-                >
-                  Enviar Mensaje
-                </Button>
               </View>
-            </View>
-          )}
+            )}
+          </View>
         </View>
-      </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+    </ScrollView>
   );
 }
 

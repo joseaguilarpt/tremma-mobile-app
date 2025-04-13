@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, ScrollView } from "react-native";
 import {
   Text,
   useTheme,
@@ -18,7 +18,7 @@ function Dashboard() {
   const theme = useTheme();
   const navigator = useNavigation();
   return (
-    <View>
+    <ScrollView>
       <NavigationBar />
       <View style={styles.container}>
         <Text variant="titleLarge">Bienvenido a Tremma</Text>
@@ -79,10 +79,10 @@ function Dashboard() {
                 <Text variant="bodyMedium">Pagos realizados</Text>
               </View>
             </Surface>
-          </TouchableRipple>
+          </TouchableRipple>  
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

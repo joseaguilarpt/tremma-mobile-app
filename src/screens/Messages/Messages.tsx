@@ -3,7 +3,7 @@ import DatesDrawer from "@/components/Dates/DatesDrawer";
 import FilterDrawer from "@/components/Filters/FiltersDrawer";
 import { useNotifications } from "@/context/notification";
 import { useNavigation } from "@react-navigation/native";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import {
   Appbar,
   Avatar,
@@ -183,7 +183,7 @@ export default function Messages() {
   });
 
   return (
-    <View>
+    <ScrollView>
       <Appbar.Header>
         <Appbar.BackAction onPress={() => navigator.navigate("Home")} />
         <Appbar.Content title="Mensajes" />
@@ -356,7 +356,7 @@ export default function Messages() {
           )}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
