@@ -27,6 +27,7 @@ import Messages from "@/screens/Messages/Messages";
 import SettingsScreen from "@/screens/Settings";
 import AddMessage from "@/screens/Messages/AddMessage";
 import { navigationRef } from "@/utils/navigation";
+import { ConnectivityProvider } from "@/context/connection";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -35,7 +36,7 @@ const Stack = createNativeStackNavigator();
 
 function Router() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator id={undefined}>
       <Stack.Screen
         name="Home"
         component={HomeView}
@@ -135,15 +136,17 @@ export default function App() {
     colorScheme === "dark" ? CombinedDarkTheme : CombinedDefaultTheme;
   return (
     <PaperProvider theme={theme}>
-      <NavigationContainer theme={theme} ref={navigationRef}>
-        <ErrorBoundary>
-          <AppProviders>
-            <Router />
-            <StatusBar style="auto" />
-            <ThemedView onLayout={onLayoutRootView} />
-          </AppProviders>
-        </ErrorBoundary>
-      </NavigationContainer>
+      <ConnectivityProvider>
+        <NavigationContainer theme={theme} ref={navigationRef}>
+          <ErrorBoundary>
+            <AppProviders>
+              <Router />
+              <StatusBar style="auto" />
+              <ThemedView onLayout={onLayoutRootView} />
+            </AppProviders>
+          </ErrorBoundary>
+        </NavigationContainer>
+      </ConnectivityProvider>
     </PaperProvider>
   );
 }
