@@ -13,13 +13,13 @@ const ConnectPush = () => {
     const registerTask = async () => {
       try {
         await BackgroundFetch.registerTaskAsync(BACKGROUND_TASK_NAME, {
-          minimumInterval: 60 * 60, // Ejecutar cada 1 hora
+          minimumInterval: 60 * 30, // Ejecutar cada 1 hora
           stopOnTerminate: false, // Continuar después de cerrar la app (solo Android)
           startOnBoot: true, // Iniciar al reiniciar el dispositivo (solo Android)
         });
         console.log("Tarea registrada correctamente.");
       } catch (error) {
-        console.error("Error al registrar la tarea:", error);
+        //console.error("Error al registrar la tarea:", error);
       }
     };
     registerTask();

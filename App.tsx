@@ -30,6 +30,8 @@ import AddMessage from "@/screens/Messages/AddMessage";
 import { navigationRef } from "@/utils/navigation";
 import { ConnectivityProvider } from "@/context/connection";
 import { sendNotification, useNotificationSetup } from "@/utils/notifications";
+import Roadmap from "@/screens/Roadmap";
+import RoadmapView from "@/screens/RoadmapScreen";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -42,6 +44,11 @@ function Router() {
       <Stack.Screen
         name="Home"
         component={HomeView}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Roadmap"
+        component={RoadmapView}
         options={{ headerShown: false }}
       />
       <Stack.Screen

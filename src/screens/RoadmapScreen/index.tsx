@@ -1,19 +1,25 @@
 import React from "react";
 
-import { CommonActions } from "@react-navigation/native";
+import { CommonActions, useRoute } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { BottomNavigation, useTheme } from "react-native-paper";
 // @ts-ignore
 import Icon from "react-native-vector-icons/FontAwesome";
-import SettingsScreen from "../Settings";
-import Dashboard from "../Dashboard";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import Roadmaps from "../Roadmaps";
+import Roadmap from "../Roadmap";
+import Orders from "../Orders";
 
 const Tab = createBottomTabNavigator();
 
-export default function HomeView() {
+const OrdersTab = (props) => <Orders {...props} />;
+
+export default function RoadmapView() {
   const theme = useTheme();
+  const route = useRoute();
+  const params = route.params as { id: string };
+
+  console.log(params, "parms");
   return (
     <ProtectedRoute>
       <Tab.Navigator
@@ -66,36 +72,28 @@ export default function HomeView() {
         )}
       >
         <Tab.Screen
-          name="Inicio"
-          component={Dashboard}
+          name="DetalleHoja"
           options={{
-            tabBarLabel: "Inicio",
+            tabBarLabel: "Detalles",
             headerShown: false,
             tabBarIcon: ({ color, size }) => {
               return <Icon name="home" size={size} color={color} />;
             },
           }}
-        />
+        >
+          {() => <Roadmap id={params.id} />}
+        </Tab.Screen>
         <Tab.Screen
-          name="Hojas"
-          component={Roadmaps}
+          name="DetallePedidos"
           options={{
-            tabBarLabel: "Hojas de Ruta",
+            tabBarLabel: "Pedidos",
             tabBarIcon: ({ color, size }) => {
               return <Icon name="list" size={size} color={color} />;
             },
           }}
-        />
-        <Tab.Screen
-          name="Cuenta"
-          component={SettingsScreen}
-          options={{
-            tabBarLabel: "Cuenta",
-            tabBarIcon: ({ color, size }) => {
-              return <Icon name="user" size={size} color={color} />;
-            },
-          }}
-        />
+        >
+          {() => <OrdersTab id={params.id} />}
+        </Tab.Screen>
       </Tab.Navigator>
     </ProtectedRoute>
   );

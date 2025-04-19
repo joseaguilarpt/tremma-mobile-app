@@ -7,6 +7,7 @@ type FilterDrawerProps = {
   closeDrawer: () => void;
   filter: string;
   onApply: () => void;
+  title?: string;
   setFilter: (v: string) => void;
 };
 
@@ -15,9 +16,10 @@ export default function FilterDrawer({
   filter,
   onApply = () => {},
   setFilter,
+  title
 }: FilterDrawerProps) {
   return (
-    <Drawer.Section title="Buscar Mensaje">
+    <Drawer.Section title={title ? title : "Buscar Mensaje"}>
       <View style={{ padding: 20 }}>
         <TextInput
           //label="Buscar Mensaje"

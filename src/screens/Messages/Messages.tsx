@@ -187,7 +187,16 @@ export default function Messages() {
     <ProtectedRoute>
       <ScrollView>
         <Appbar.Header>
-          <Appbar.BackAction onPress={() => navigator.navigate("Home")} />
+          <Appbar.BackAction
+            onPress={() => {
+              if (datesDrawerVisible || filterDrawerVisible) {
+                closeDrawer();
+                closeFilterDrawer();
+              } else {
+                navigator.goBack();
+              }
+            }}
+          />
           <Appbar.Content title="Mensajes" />
           <Appbar.Action
             icon="calendar"
