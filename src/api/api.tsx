@@ -101,7 +101,7 @@ export const refreshAuthToken = async () => {
       },
     };
 
-    const expirationTime = Date.now() + response.data.expiresIn * 1000;
+    const expirationTime = Date.now() + response.data.expiresIn * 60 * 1000;
 
     // Update API instance with new token
     updateApiInstance(response?.data?.token);
@@ -159,7 +159,7 @@ api.interceptors.request.use(async (config) => {
       config.headers["Authorization"] = `Bearer ${storageToken}`;
     }
   } catch (e) {
-    console.error("Failed to attach token:", e);
+//console.error("Failed to attach token:", e);
   }
   return config;
 });
@@ -197,7 +197,7 @@ api.interceptors.response.use(
         await clearAuthData();
 
         // Handle navigation to login screen (React Navigation)
-        console.error("Session expired. Redirecting to login.");
+       // console.error("Session expired. Redirecting to login.");
         navigate("Login");
         throw refreshError; // Let the app handle navigation outside this service
       } finally {

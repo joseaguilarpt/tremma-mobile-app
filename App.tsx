@@ -1,5 +1,6 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import * as Notifications from 'expo-notifications';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -28,6 +29,7 @@ import SettingsScreen from "@/screens/Settings";
 import AddMessage from "@/screens/Messages/AddMessage";
 import { navigationRef } from "@/utils/navigation";
 import { ConnectivityProvider } from "@/context/connection";
+import { sendNotification, useNotificationSetup } from "@/utils/notifications";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -81,6 +83,7 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     "Futura-Bold": require("./src/assets/fonts/Futura-Bold.otf"),
   });
+
   React.useEffect(() => {
     async function prepare() {
       try {
@@ -95,6 +98,8 @@ export default function App() {
 
     prepare();
   }, []);
+
+  useNotificationSetup();
 
   const onLayoutRootView = React.useCallback(async () => {
     if (appIsReady && fontsLoaded) {

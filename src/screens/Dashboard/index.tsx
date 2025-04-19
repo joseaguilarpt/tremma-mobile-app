@@ -9,6 +9,7 @@ import {
 } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import NavigationBar from "@/components/NavigationBar/NavigationBar";
+import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
@@ -18,71 +19,77 @@ function Dashboard() {
   const theme = useTheme();
   const navigator = useNavigation();
   return (
-    <ScrollView>
-      <NavigationBar />
-      <View style={styles.container}>
-        <Text variant="titleLarge">Bienvenido a Tremma</Text>
-        <Surface style={styles.surface} elevation={4}>
-          <Image
-            source={require("../../assets/images/tremma-car.png")}
-            style={styles.truck}
-          />
-        </Surface>
-        <View style={styles.cards}>
-          <TouchableRipple
-            onPress={() => navigator.navigate("Home")}
-            rippleColor="rgb(67, 170, 177)"
-          >
-            <Surface style={styles.cardTop} elevation={4}>
-              <View>
-                <Icon source="bus" size={40} color={theme.colors.onPrimary} />
-              </View>
-              <View style={styles.flex}>
-                <Text variant="titleLarge">Hojas de Ruta</Text>
-                <Text variant="bodyMedium">Hojas pendientes</Text>
-                <Text variant="bodyMedium">Hojas cerradas</Text>
-              </View>
-            </Surface>
-          </TouchableRipple>
-          <Spacer size={20} />
-          <TouchableRipple
-            onPress={() => navigator.navigate("Home")}
-            rippleColor="rgb(67, 170, 177)"
-          >
-            <Surface style={styles.card} elevation={4}>
-              <View>
-                <Icon
-                  source="barcode"
-                  size={40}
-                  color={theme.colors.onPrimary}
-                />
-              </View>
-              <View style={styles.flex}>
-                <Text variant="titleLarge">Pedidos</Text>
-                <Text variant="bodyMedium">Pedidos pendientes</Text>
-                <Text variant="bodyMedium">Pedidos completados</Text>
-              </View>
-            </Surface>
-          </TouchableRipple>
-          <Spacer size={20} />
-          <TouchableRipple
-            onPress={() => navigator.navigate("Home")}
-            rippleColor="rgb(67, 170, 177)"
-          >
-            <Surface style={styles.card} elevation={4}>
-              <View>
-                <Icon source="cash" size={40} color={theme.colors.onPrimary} />
-              </View>
-              <View style={styles.flex}>
-                <Text variant="titleLarge">Gestion de Pagos</Text>
-                <Text variant="bodyMedium">Pagos pendientes</Text>
-                <Text variant="bodyMedium">Pagos realizados</Text>
-              </View>
-            </Surface>
-          </TouchableRipple>  
+    <ProtectedRoute>
+      <ScrollView>
+        <NavigationBar />
+        <View style={styles.container}>
+          <Text variant="titleLarge">Bienvenido a Tremma</Text>
+          <Surface style={styles.surface} elevation={4}>
+            <Image
+              source={require("../../assets/images/tremma-car.png")}
+              style={styles.truck}
+            />
+          </Surface>
+          <View style={styles.cards}>
+            <TouchableRipple
+              onPress={() => navigator.navigate("Home")}
+              rippleColor="rgb(67, 170, 177)"
+            >
+              <Surface style={styles.cardTop} elevation={4}>
+                <View>
+                  <Icon source="bus" size={40} color={theme.colors.onPrimary} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="titleLarge">Hojas de Ruta</Text>
+                  <Text variant="bodyMedium">Hojas pendientes</Text>
+                  <Text variant="bodyMedium">Hojas cerradas</Text>
+                </View>
+              </Surface>
+            </TouchableRipple>
+            <Spacer size={20} />
+            <TouchableRipple
+              onPress={() => navigator.navigate("Home")}
+              rippleColor="rgb(67, 170, 177)"
+            >
+              <Surface style={styles.card} elevation={4}>
+                <View>
+                  <Icon
+                    source="barcode"
+                    size={40}
+                    color={theme.colors.onPrimary}
+                  />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="titleLarge">Pedidos</Text>
+                  <Text variant="bodyMedium">Pedidos pendientes</Text>
+                  <Text variant="bodyMedium">Pedidos completados</Text>
+                </View>
+              </Surface>
+            </TouchableRipple>
+            <Spacer size={20} />
+            <TouchableRipple
+              onPress={() => navigator.navigate("Home")}
+              rippleColor="rgb(67, 170, 177)"
+            >
+              <Surface style={styles.card} elevation={4}>
+                <View>
+                  <Icon
+                    source="cash"
+                    size={40}
+                    color={theme.colors.onPrimary}
+                  />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="titleLarge">Gestion de Pagos</Text>
+                  <Text variant="bodyMedium">Pagos pendientes</Text>
+                  <Text variant="bodyMedium">Pagos realizados</Text>
+                </View>
+              </Surface>
+            </TouchableRipple>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </ProtectedRoute>
   );
 }
 

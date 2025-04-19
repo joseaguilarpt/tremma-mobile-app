@@ -1,4 +1,5 @@
 import { getSettings } from "@/api/settings";
+import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useAuth } from "@/context/auth";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
@@ -26,7 +27,7 @@ export default function ChangePassword() {
 
   const navigation = useNavigation();
   const { user } = useAuth();
-const theme = useTheme();
+  const theme = useTheme();
   const generateValidationRules = (password: string) => {
     return passwordSettings.map((setting) => {
       const validate = (): boolean => {
@@ -160,83 +161,84 @@ const theme = useTheme();
   const filteredResults = results.filter((item) => item.description);
 
   return (
-    <ScrollView>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Cuenta de Usuario:" />
-      </Appbar.Header>
-      <View style={styles.container}>
-        <Text>Actualice su contraseña:</Text>
+    <ProtectedRoute>
+      <ScrollView>
+        <Appbar.Header>
+          <Appbar.BackAction onPress={() => navigation.goBack()} />
+          <Appbar.Content title="Cuenta de Usuario:" />
+        </Appbar.Header>
+        <View style={styles.container}>
+          <Text>Actualice su contraseña:</Text>
 
-        {/* Password Input */}
-        <TextInput
-          label="New Password"
-          value={password}
-          mode="outlined"
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          right={
-            <TextInput.Icon
-              icon={showPassword ? "eye-off" : "eye"}
-              onPress={() => setShowPassword(!showPassword)}
-            />
-          }
-          style={styles.input}
-        />
-        <HelperText
-          type="error"
-          visible={!validationResults.every((r) => r.isValid)}
-        >
-          Ensure your password meets all requirements.
-        </HelperText>
-
-        {/* Confirm Password Input */}
-        <TextInput
-          label="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry={!showConfirmPassword}
-          mode="outlined"
-          right={
-            <TextInput.Icon
-              icon={showConfirmPassword ? "eye-off" : "eye"}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            />
-          }
-          style={styles.input}
-        />
-
-        <Card style={{ marginTop: 16 }}>
-          {/* Validation Checklist */}
-          {filteredResults.map((result, index) => (
-            <View key={index} style={styles.validationItem}>
-              <IconButton
-                size={10}
-                icon={result.isValid ? "check" : "close"}
-                color={result.isValid ? "green" : "red"}
+          {/* Password Input */}
+          <TextInput
+            label="New Password"
+            value={password}
+            mode="outlined"
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? "eye-off" : "eye"}
+                onPress={() => setShowPassword(!showPassword)}
               />
-              <Text>{result.description}</Text>
-            </View>
-          ))}
-        </Card>
-        <Button
-          mode="contained"
-          style={{ marginTop: 40 }}
-          onPress={handleChangePassword}
-        >
-          Actualizar Contraseña
-        </Button>
-        <Button
-          mode="text"
-          style={{ marginTop: 20 }}
-          buttonColor={theme.colors.secondary}
-          onPress={() => navigation.navigate("Home")}
-        >
-          Volver al Inicio
-        </Button>
-      </View>
-      
-    </ScrollView>
+            }
+            style={styles.input}
+          />
+          <HelperText
+            type="error"
+            visible={!validationResults.every((r) => r.isValid)}
+          >
+            Ensure your password meets all requirements.
+          </HelperText>
+
+          {/* Confirm Password Input */}
+          <TextInput
+            label="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+            mode="outlined"
+            right={
+              <TextInput.Icon
+                icon={showConfirmPassword ? "eye-off" : "eye"}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              />
+            }
+            style={styles.input}
+          />
+
+          <Card style={{ marginTop: 16 }}>
+            {/* Validation Checklist */}
+            {filteredResults.map((result, index) => (
+              <View key={index} style={styles.validationItem}>
+                <IconButton
+                  size={10}
+                  icon={result.isValid ? "check" : "close"}
+                  color={result.isValid ? "green" : "red"}
+                />
+                <Text>{result.description}</Text>
+              </View>
+            ))}
+          </Card>
+          <Button
+            mode="contained"
+            style={{ marginTop: 40 }}
+            onPress={handleChangePassword}
+          >
+            Actualizar Contraseña
+          </Button>
+          <Button
+            mode="text"
+            style={{ marginTop: 20 }}
+            buttonColor={theme.colors.secondary}
+            onPress={() => navigation.navigate("Home")}
+          >
+            Volver al Inicio
+          </Button>
+        </View>
+      </ScrollView>
+    </ProtectedRoute>
   );
 }
 

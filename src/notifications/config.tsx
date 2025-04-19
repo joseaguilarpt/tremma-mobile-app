@@ -5,6 +5,7 @@ import { getCommunications } from "@/api/communication";
 import { getAuthData } from "@/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
+import { sendNotification } from "@/utils/notifications";
 
 export const BACKGROUND_TASK_NAME = "background-fetch-task";
 
@@ -41,16 +42,10 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
         dayjs(item.Fecha).isAfter(dayjs(lastCheck))
       );
     }
-    if ((messagesList ?? []).length > 0) {
-      // Enviar una notificación local
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Tremma App - Notificaciones",
-          body: `Tiene ${messagesList.length} mensajes Nuevos.`,
-        },
-        trigger: null, // Inmediato
-      });
-    }
+    sendNotification({
+      title: "Tremma App - Notificaciones",
+      body: `Tiene ${messagesList?.length ?? 3} mensajes Nuevos.`,
+    })
     await AsyncStorage.setItem("last_messages_check", new Date().toISOString());
     return BackgroundFetch.BackgroundFetchResult.NewData;
   } catch (error) {

@@ -129,7 +129,7 @@ export const login = async (params: LoginData) => {
       },
     };
 
-    const expirationTime = Date.now() + response.data.expiresIn * 1000;
+    const expirationTime = Date.now() + response.data.expiresIn * 60 * 1000;
 
     // Update API instance with new token
     updateApiInstance(response?.data?.token);
@@ -182,7 +182,7 @@ export const refreshToken = async () => {
       },
     };
 
-    const expirationTime = Date.now() + response.data.expiresIn * 1000;
+    const expirationTime = Date.now() + response.data.expiresIn * 60 * 1000;
 
     // Update API instance with new token
     updateApiInstance(response?.data?.token);

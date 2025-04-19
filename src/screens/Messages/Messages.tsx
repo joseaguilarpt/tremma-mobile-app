@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/es";
 import isBetween from "dayjs/plugin/isBetween";
+import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 
 dayjs.extend(isBetween);
 
@@ -183,180 +184,182 @@ export default function Messages() {
   });
 
   return (
-    <ScrollView>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => navigator.navigate("Home")} />
-        <Appbar.Content title="Mensajes" />
-        <Appbar.Action
-          icon="calendar"
-          onPress={() => {
-            if (datesDrawerVisible) {
-              closeDrawer();
-            } else {
-              openDrawer();
-            }
-          }}
-        />
-        <Appbar.Action icon="magnify" onPress={openFilterDrawer} />
-      </Appbar.Header>
-      {datesDrawerVisible && (
-        <DatesDrawer
-          closeDrawer={closeDrawer}
-          selectedRange={selectedRange}
-          setSelectedRange={setSelectedRange}
-        />
-      )}
-      {filterDrawerVisible && (
-        <FilterDrawer
-          closeDrawer={closeFilterDrawer}
-          filter={filter}
-          setFilter={setFilter}
-          onApply={applyFilter}
-        />
-      )}
-      {!datesDrawerVisible && !filterDrawerVisible && (
-        <View style={styles.container}>
-          <View style={{ flexDirection: "row", marginTop: 20 }}>
-            {selectedRange.startDate && selectedRange.endDate && (
-              <Chip
-                onClose={() => {
-                  setSelectedRange({
-                    endDate: null,
-                    startDate: null,
-                  });
-                }}
-                style={{ width: 230 }}
-                icon="calendar"
-                onPress={() => {
-                  setSelectedRange({
-                    endDate: null,
-                    startDate: null,
-                  });
-                }}
-              >
-                {selectedRange.startDate} - {selectedRange.endDate}
-              </Chip>
-            )}
-            {filter && (
-              <Chip
-                onClose={() => {
-                  setFilter("");
-                }}
-                style={{ maxWidth: 160, marginLeft: 10 }}
-                icon="note"
-                onPress={() => {
-                  setFilter("");
-                }}
-              >
-                {filter}
-              </Chip>
-            )}
-          </View>
-
-          <View
-            style={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexDirection: "row",
-              marginTop: 10,
-            }}
-          >
-            {(messages ?? []).length > 0 && (
-              <View>
-                <Text style={{ fontWeight: "bold" }}>Mensajes sin leer:</Text>
-                <Text> {messages.length}</Text>
-              </View>
-            )}
-            <Button
-              mode="contained"
-              icon={"send"}
-              onPress={() => {
-                navigator.navigate("AddMessage");
-              }}
-            >
-              Nuevo Mensaje
-            </Button>
-          </View>
-          <Divider
-            style={{
-              margin: 16,
+    <ProtectedRoute>
+      <ScrollView>
+        <Appbar.Header>
+          <Appbar.BackAction onPress={() => navigator.navigate("Home")} />
+          <Appbar.Content title="Mensajes" />
+          <Appbar.Action
+            icon="calendar"
+            onPress={() => {
+              if (datesDrawerVisible) {
+                closeDrawer();
+              } else {
+                openDrawer();
+              }
             }}
           />
-          {(filteredMessages ?? []).length === 0 && (
-            <View
-              style={{
-                justifyContent: "center",
-                flexDirection: "row",
-                alignItems: "center",
-                marginTop: 20,
-              }}
-            >
-              <View>
-                <View
-                  style={{
-                    justifyContent: "center",
-                    flexDirection: "row",
-                    marginBottom: 10,
+          <Appbar.Action icon="magnify" onPress={openFilterDrawer} />
+        </Appbar.Header>
+        {datesDrawerVisible && (
+          <DatesDrawer
+            closeDrawer={closeDrawer}
+            selectedRange={selectedRange}
+            setSelectedRange={setSelectedRange}
+          />
+        )}
+        {filterDrawerVisible && (
+          <FilterDrawer
+            closeDrawer={closeFilterDrawer}
+            filter={filter}
+            setFilter={setFilter}
+            onApply={applyFilter}
+          />
+        )}
+        {!datesDrawerVisible && !filterDrawerVisible && (
+          <View style={styles.container}>
+            <View style={{ flexDirection: "row", marginTop: 20 }}>
+              {selectedRange.startDate && selectedRange.endDate && (
+                <Chip
+                  onClose={() => {
+                    setSelectedRange({
+                      endDate: null,
+                      startDate: null,
+                    });
+                  }}
+                  style={{ width: 230 }}
+                  icon="calendar"
+                  onPress={() => {
+                    setSelectedRange({
+                      endDate: null,
+                      startDate: null,
+                    });
                   }}
                 >
-                  <Icon source={"message"} size={40} />
+                  {selectedRange.startDate} - {selectedRange.endDate}
+                </Chip>
+              )}
+              {filter && (
+                <Chip
+                  onClose={() => {
+                    setFilter("");
+                  }}
+                  style={{ maxWidth: 160, marginLeft: 10 }}
+                  icon="note"
+                  onPress={() => {
+                    setFilter("");
+                  }}
+                >
+                  {filter}
+                </Chip>
+              )}
+            </View>
+
+            <View
+              style={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexDirection: "row",
+                marginTop: 10,
+              }}
+            >
+              {(messages ?? []).length > 0 && (
+                <View>
+                  <Text style={{ fontWeight: "bold" }}>Mensajes sin leer:</Text>
+                  <Text> {messages.length}</Text>
                 </View>
-                <Text>No hay mensajes para mostrar en este momento.</Text>
-              </View>
+              )}
+              <Button
+                mode="contained"
+                icon={"send"}
+                onPress={() => {
+                  navigator.navigate("AddMessage");
+                }}
+              >
+                Nuevo Mensaje
+              </Button>
             </View>
-          )}
-          {(filteredMessages ?? []).length > 0 && (
-            <View>
-              {filteredMessages.map((item) => {
-                const description = setTruncatedText(item?.Descripcion);
-                const title = setTruncatedText(
-                  `${item.UserEnvia?.Nombre} ${item.UserEnvia?.Apellido1}`,
-                  25
-                );
-                const subTitle = setTruncatedText(item.Asunto, 30);
-                const date = formatMessageDate(item.Fecha);
-                return (
-                  <TouchableRipple
-                    onPress={() =>
-                      navigator.navigate("AddMessage", { id: item.Id })
-                    }
-                    rippleColor="rgb(67, 170, 177)"
-                    key={item.Id}
-                    style={styles.surfaceMessageContainer}
+            <Divider
+              style={{
+                margin: 16,
+              }}
+            />
+            {(filteredMessages ?? []).length === 0 && (
+              <View
+                style={{
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginTop: 20,
+                }}
+              >
+                <View>
+                  <View
+                    style={{
+                      justifyContent: "center",
+                      flexDirection: "row",
+                      marginBottom: 10,
+                    }}
                   >
-                    <Surface style={styles.surfaceMessage}>
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <View>
-                          <Avatar.Text
-                            size={35}
-                            label={item?.UserEnvia?.Nombre.charAt(0) ?? ""}
-                          />
+                    <Icon source={"message"} size={40} />
+                  </View>
+                  <Text>No hay mensajes para mostrar en este momento.</Text>
+                </View>
+              </View>
+            )}
+            {(filteredMessages ?? []).length > 0 && (
+              <View>
+                {filteredMessages.map((item) => {
+                  const description = setTruncatedText(item?.Descripcion);
+                  const title = setTruncatedText(
+                    `${item.UserEnvia?.Nombre} ${item.UserEnvia?.Apellido1}`,
+                    25
+                  );
+                  const subTitle = setTruncatedText(item.Asunto, 30);
+                  const date = formatMessageDate(item.Fecha);
+                  return (
+                    <TouchableRipple
+                      onPress={() =>
+                        navigator.navigate("AddMessage", { id: item.Id })
+                      }
+                      rippleColor="rgb(67, 170, 177)"
+                      key={item.Id}
+                      style={styles.surfaceMessageContainer}
+                    >
+                      <Surface style={styles.surfaceMessage}>
+                        <View
+                          style={{ flexDirection: "row", alignItems: "center" }}
+                        >
+                          <View>
+                            <Avatar.Text
+                              size={35}
+                              label={item?.UserEnvia?.Nombre.charAt(0) ?? ""}
+                            />
+                          </View>
+                          <View style={{ paddingLeft: 10 }}>
+                            <Text variant="titleMedium">{title}</Text>
+                            <Text variant="bodyLarge">{subTitle}</Text>
+                            <Text style={{ paddingTop: 5 }} variant="bodySmall">
+                              {description}
+                            </Text>
+                          </View>
                         </View>
-                        <View style={{ paddingLeft: 10 }}>
-                          <Text variant="titleMedium">{title}</Text>
-                          <Text variant="bodyLarge">{subTitle}</Text>
-                          <Text style={{ paddingTop: 5 }} variant="bodySmall">
-                            {description}
-                          </Text>
+                        <View style={styles.date}>
+                          <Text variant="labelSmall">{date}</Text>
+                          {!item.Confirmado && (
+                            <Chip style={styles.newMessageChip}>No Leido</Chip>
+                          )}
                         </View>
-                      </View>
-                      <View style={styles.date}>
-                        <Text variant="labelSmall">{date}</Text>
-                        {!item.Confirmado && (
-                          <Chip style={styles.newMessageChip}>No Leido</Chip>
-                        )}
-                      </View>
-                    </Surface>
-                  </TouchableRipple>
-                );
-              })}
-            </View>
-          )}
-        </View>
-      )}
-    </ScrollView>
+                      </Surface>
+                    </TouchableRipple>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </ProtectedRoute>
   );
 }
 

@@ -51,7 +51,7 @@ const UserSelect = ({ onChange, name, disabled, error, helperText, label }) => {
   }, [debouncedFilterValue]);
 
   const handleSelect = (user) => {
-    setInputValue(user.NombreCompleto);
+    setInputValue(user?.NombreCompleto);
     setShowDropdown(false);
     isSelection.current = true;
     onChange?.(name, user);
@@ -62,7 +62,7 @@ const UserSelect = ({ onChange, name, disabled, error, helperText, label }) => {
       <TextInput
         label={label ?? "Seleccionar usuario"}
         placeholder="Introduce un nombre..."
-        mode='outlined'
+        mode="outlined"
         value={inputValue}
         onChangeText={setInputValue}
         disabled={disabled}

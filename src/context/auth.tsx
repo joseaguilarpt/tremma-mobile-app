@@ -27,6 +27,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const navigation = useNavigation();
 
+  const isLoggedIn = async () => {
+    if (loaded && !user) {
+      logout();
+      return false;
+    }
+    if (user.expiration && Date.now() > user.expiration) {
+      await refreshTokenApi(); // Attempt to refresh the token
+      const refreshedAuthData = await getAuthData(); // Re-fetch the auth data after refreshing
+      if (refreshedAuthData) {
+        setLoaded(true); // Token is still valid, set loaded to true
+        setUser(refreshedAuthData.user); // Update user data
+        return true;
+      } else {
+        logout(); // If refresh fails, log out
+        return false;
+      }
+    }
+    return true;
+  };
   // Login function to authenticate the user
   const login = async (email: string, password: string) => {
     try {
@@ -103,7 +122,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
     setLoaded(true);
     await clearAuthData(); // Clear any stored auth data (like tokens)
-    navigation.navigate("Login"); // Navigate to the Login screen
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Login" }],
+    });
   };
 
   // Logout function to clear user and token
@@ -113,7 +135,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(null);
       setLoaded(false);
       await clearAuthData(); // Clear any stored auth data (like tokens)
-      navigation.navigate("Login"); // Navigate to the Login screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
     } catch (e) {
       throw e;
     }
@@ -168,6 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         logout,
         imageSrc,
         roleOptions,
+        isLoggedIn,
         loaded,
         changePassword: changePasswordAndRefresh,
         isRoleAuthorized,
