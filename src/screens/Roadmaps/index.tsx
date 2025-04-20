@@ -83,9 +83,9 @@ function Roadmaps() {
     try {
       const { Items = [], TotalCount } = await getRoadmapsList({
         Conductor: user.Id,
-        PageSize: 100,
-        minDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        // Estado: "Pendiente"
+        PageSize: 1000,
+        MinDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        MaxDate: dayCR().startOf("D").add(1, 'M').format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
       });
       setRoadmaps(Items);
       const totalOrders = (Items ?? []).reduce((acc, item) => {
