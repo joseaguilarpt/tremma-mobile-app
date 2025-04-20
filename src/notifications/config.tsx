@@ -2,7 +2,7 @@ import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 import * as Notifications from "expo-notifications";
 import { getCommunications } from "@/api/communication";
-import { getAuthData } from "@/api";
+import { getAuthData, isTokenExpired, refreshToken } from "@/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { sendNotification } from "@/utils/notifications";
@@ -22,8 +22,11 @@ Notifications.setNotificationHandler({
 TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
   try {
     console.log("Ejecutando tarea en segundo plano...");
+    const isExpired = await isTokenExpired();
+    if (isExpired) {
+      await refreshToken();
+    }
     const data = await getAuthData();
-
     // Comprobar si hay un ID de usuario válido
     if (!data?.user?.id) {
       console.log("No hay user.Id disponible. Saltando la llamada a la API.");
@@ -43,9 +46,9 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
       );
     }
     sendNotification({
-      title: "Tremma App - Notificaciones",
-      body: `Tiene ${messagesList?.length ?? 3} mensajes Nuevos.`,
-    })
+      title: "Tremma",
+      body: `Tiene ${messagesList?.length ?? ""} mensajes Nuevos.`,
+    });
     await AsyncStorage.setItem("last_messages_check", new Date().toISOString());
     return BackgroundFetch.BackgroundFetchResult.NewData;
   } catch (error) {

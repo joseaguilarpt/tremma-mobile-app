@@ -193,7 +193,7 @@ export default function Messages() {
                 closeDrawer();
                 closeFilterDrawer();
               } else {
-                navigator.goBack();
+                navigator.navigate("Home");
               }
             }}
           />
