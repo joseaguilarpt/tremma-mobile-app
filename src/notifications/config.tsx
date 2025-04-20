@@ -6,6 +6,7 @@ import { getAuthData, isTokenExpired, refreshToken } from "@/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { sendNotification } from "@/utils/notifications";
+import { dayCR } from "@/utils/dates";
 
 export const BACKGROUND_TASK_NAME = "background-fetch-task";
 
@@ -42,7 +43,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     const lastCheck = await AsyncStorage.getItem("last_messages_check");
     if (lastCheck) {
       messagesList = messagesList.filter((item) =>
-        dayjs(item.Fecha).isAfter(dayjs(lastCheck))
+        dayCR(item.Fecha).isAfter(dayCR(lastCheck))
       );
     }
     sendNotification({

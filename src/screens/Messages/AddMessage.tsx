@@ -9,6 +9,7 @@ import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
 import { toLowerCaseKeys } from "@/utils";
+import { dayCR } from "@/utils/dates";
 import { parseErrors } from "@/utils/errors";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import dayjs from "dayjs";
@@ -79,7 +80,7 @@ export default function AddMessage() {
         sender: `${data.UserEnvia.Nombre} ${data.UserEnvia.Apellido1}`,
         message: data.Descripcion,
         subject: data.Asunto,
-        date: dayjs(data.Fecha).format("D MMM YYYY"),
+        date: dayCR(data.Fecha).format("D MMM YYYY"),
         id: data.Id,
       });
       setFormState({
@@ -150,7 +151,7 @@ export default function AddMessage() {
           userEnvia: toLowerCaseKeys(user.original),
           userRecibe: toLowerCaseKeys(receiver),
           asunto: subject,
-          fecha: dayjs().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+          fecha: dayCR().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
           descripcion: message,
           confirmado: false,
         };

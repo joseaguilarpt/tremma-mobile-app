@@ -21,6 +21,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/es";
 import isBetween from "dayjs/plugin/isBetween";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
+import { dayCR } from "@/utils/dates";
 
 dayjs.extend(isBetween);
 
@@ -28,13 +29,13 @@ dayjs.locale("es");
 dayjs.extend(relativeTime);
 
 const formatMessageDate = (dateString: string) => {
-  const date = dayjs(dateString);
+  const date = dayCR(dateString);
 
-  if (date.isSame(dayjs(), "d")) {
+  if (date.isSame(dayCR(), "d")) {
     return date.format("HH:mm");
-  } else if (date.isSame(dayjs().subtract(1, "d"), "d")) {
+  } else if (date.isSame(dayCR().subtract(1, "d"), "d")) {
     return "Ayer";
-  } else if (date.isSame(dayjs(), "year")) {
+  } else if (date.isSame(dayCR(), "year")) {
     return date.format("D MMM"); // Ej: "5 abr"
   } else {
     return date.format("D MMM YYYY");
@@ -162,10 +163,10 @@ export default function Messages() {
     };
 
     const matchesDateRange = () => {
-      const itemDate = dayjs(item.Fecha);
+      const itemDate = dayCR(item.Fecha);
       return itemDate.isBetween(
-        dayjs(selectedRange.startDate),
-        dayjs(selectedRange.endDate),
+        dayCR(selectedRange.startDate),
+        dayCR(selectedRange.endDate),
         "day",
         "[]"
       );

@@ -15,7 +15,7 @@ import { useNotifications } from "@/context/notification";
 import { getRoadmapsList } from "@/api/roadmap";
 import { useAuth } from "@/context/auth";
 import RoadmapCard from "@/components/RoadmapCard/RoadmapCard";
-import dayjs from "dayjs";
+import { dayCR } from "@/utils/dates";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
@@ -38,8 +38,8 @@ function Dashboard() {
       const { Items = [], TotalCount = 0 } = await getRoadmapsList({
         Conductor: user.Id,
         PageSize: 1000,
-        MinDate: dayjs().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        // Estado: "Pendiente"
+        MinDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        MaxDate: dayCR().startOf("D").add(1, 'M').format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
       });
       setRoadmaps(Items);
       const totalOrders = (Items ?? []).reduce((acc, item) => {

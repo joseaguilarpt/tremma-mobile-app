@@ -19,7 +19,6 @@ export default function RoadmapView() {
   const route = useRoute();
   const params = route.params as { id: string };
 
-  console.log(params, "parms");
   return (
     <ProtectedRoute>
       <Tab.Navigator

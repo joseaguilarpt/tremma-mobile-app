@@ -1,5 +1,5 @@
+import { dayCR } from "@/utils/dates";
 import { useNavigation } from "@react-navigation/native";
-import dayjs from "dayjs";
 import { StyleSheet, View } from "react-native";
 import { Surface, Text, TouchableRipple, useTheme } from "react-native-paper";
 
@@ -28,7 +28,7 @@ const RoadmapCard = ({ roadmap, color = "rgb(18, 86, 107)" }) => {
               <Text variant="bodyMedium">{roadmap.TotalBultos ?? "-"}</Text>
               <Text variant="bodyMedium">{roadmap.Ruta ?? "-"}</Text>
               <Text variant="bodyMedium">
-                {dayjs(roadmap.FechaEntrega).format("DD/MM/YY") ?? "-"}
+                {dayCR(roadmap.FechaEntrega).format("DD/MM/YY") ?? "-"}
               </Text>
             </View>
           </View>

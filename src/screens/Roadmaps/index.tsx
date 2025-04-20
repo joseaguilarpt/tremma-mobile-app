@@ -9,7 +9,7 @@ import { useAuth } from "@/context/auth";
 import RoadmapCard from "@/components/RoadmapCard/RoadmapCard";
 import DatesDrawer from "@/components/Dates/DatesDrawer";
 import FilterDrawer from "@/components/Filters/FiltersDrawer";
-import dayjs from "dayjs";
+import { dayCR } from "@/utils/dates";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
@@ -83,8 +83,8 @@ function Roadmaps() {
     try {
       const { Items = [], TotalCount } = await getRoadmapsList({
         Conductor: user.Id,
-        PageSize: 1000,
-        MinDate: dayjs().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        PageSize: 100,
+        minDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
         // Estado: "Pendiente"
       });
       setRoadmaps(Items);
@@ -130,10 +130,10 @@ function Roadmaps() {
     };
 
     const matchesDateRange = () => {
-      const itemDate = dayjs(item.Fecha);
+      const itemDate = dayCR(item.Fecha);
       return itemDate.isBetween(
-        dayjs(selectedRange.startDate),
-        dayjs(selectedRange.endDate),
+        dayCR(selectedRange.startDate),
+        dayCR(selectedRange.endDate),
         "day",
         "[]"
       );
