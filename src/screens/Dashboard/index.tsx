@@ -16,6 +16,7 @@ import { getRoadmapsList } from "@/api/roadmap";
 import { useAuth } from "@/context/auth";
 import RoadmapCard from "@/components/RoadmapCard/RoadmapCard";
 import { dayCR } from "@/utils/dates";
+import { useLoading } from "@/context/loading.utils";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
@@ -24,6 +25,7 @@ const Spacer = ({ size = 8, horizontal = false }) => (
 function Dashboard() {
   const theme = useTheme();
   const navigator = useNavigation();
+  const { setLoading }= useLoading();
   const [roadmaps, setRoadmaps] = React.useState([]);
   const [statistics, setStatistics] = React.useState({
     orders: 0,
@@ -34,6 +36,7 @@ function Dashboard() {
   const { user } = useAuth();
   const { showSnackbar } = useNotifications();
   const fetchData = async () => {
+    setLoading(true);
     try {
       const { Items = [], TotalCount = 0 } = await getRoadmapsList({
         Conductor: user.Id,
@@ -63,6 +66,9 @@ function Dashboard() {
         "Error al cargar las hojas de ruta, por favor intente nuevamente",
         "error"
       );
+    }
+    finally {
+      setLoading(false);
     }
   };
 

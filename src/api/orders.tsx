@@ -3,11 +3,11 @@ import api from "./api";
 const encodeParams = (params: Record<string, any>): string => {
   return Object.entries(params)
     .filter(
-      ([_, value]) => value !== undefined && value !== null && value !== "",
+      ([_, value]) => value !== undefined && value !== null && value !== ""
     ) // Filtrar valores nulos o vacíos
     .map(
       ([key, value]) =>
-        `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
+        `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
     )
     .join("&");
 };
@@ -78,3 +78,26 @@ export const getDistrictOrder = async (id: string) => {
     throw e;
   }
 };
+
+export const getOrdersByDate = async (date: string) => {
+  try {
+    const response = await api.get(`/entregas/asignadas?fechaEntrega=${date}`);
+    return response.data;
+  } catch (e) {
+    throw e;
+  }
+};
+
+export const confirmOrderAssignment = async (payload: any) => {
+  try {
+    await api.put(
+      `/entregas/confirmar_asignacion?hojaRutaId=${payload.Id}`,
+      payload?.orders
+    );
+    return true;
+  } catch (e) {
+    throw e;
+  }
+};
+
+///api/entregas/confirmar_asignacion

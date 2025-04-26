@@ -10,6 +10,7 @@ import RoadmapCard from "@/components/RoadmapCard/RoadmapCard";
 import DatesDrawer from "@/components/Dates/DatesDrawer";
 import FilterDrawer from "@/components/Filters/FiltersDrawer";
 import { dayCR } from "@/utils/dates";
+import { useLoading } from "@/context/loading.utils";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
@@ -38,6 +39,7 @@ function Roadmaps() {
 
   const { user } = useAuth();
   const { showSnackbar } = useNotifications();
+  const { setLoading } = useLoading();
 
   const openDrawer = () => {
     setDatesDrawerVisible(true);
@@ -81,11 +83,15 @@ function Roadmaps() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const { Items = [], TotalCount } = await getRoadmapsList({
         Conductor: user.Id,
         PageSize: 1000,
         MinDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        MaxDate: dayCR().startOf("D").add(1, 'M').format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        MaxDate: dayCR()
+          .startOf("D")
+          .add(1, "M")
+          .format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
       });
       setRoadmaps(Items);
       const totalOrders = (Items ?? []).reduce((acc, item) => {
@@ -109,6 +115,8 @@ function Roadmaps() {
         "Error al cargar las hojas de ruta, por favor intente nuevamente",
         "error"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -156,14 +164,14 @@ function Roadmaps() {
       <ScrollView>
         <Appbar.Header>
           <Appbar.BackAction
-           onPress={() => {
-            if (datesDrawerVisible || filterDrawerVisible) {
-              closeDrawer();
-              closeFilterDrawer();
-            } else {
-              navigator.goBack();
-            }
-          }}
+            onPress={() => {
+              if (datesDrawerVisible || filterDrawerVisible) {
+                closeDrawer();
+                closeFilterDrawer();
+              } else {
+                navigator.goBack();
+              }
+            }}
           />
           <Appbar.Content title="Hojas de Ruta" />
           <Appbar.Action

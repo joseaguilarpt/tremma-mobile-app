@@ -15,19 +15,26 @@ import {
 import { StyleSheet, View } from "react-native";
 import OrderInvalidateSheet from "../OrderInvalidate";
 import OrderNotLoadedSheet from "../OrderNotLoaded";
+import { confirmOrderAssignment } from "@/api/orders";
+import { useNotifications } from "@/context/notification";
+import { useLoading } from "@/context/loading.utils";
 
 type OrderMenuProps = {
   closeSheet: () => void;
   selectedOrder: any;
+  roadmap: any;
   bottomSheetRef: React.RefObject<BottomSheetModal>;
 };
 
 export default function OrderSheet({
   closeSheet,
   selectedOrder,
+  roadmap,
   bottomSheetRef,
 }: OrderMenuProps) {
   const theme = useTheme();
+  const { showSnackbar } = useNotifications();
+  const { setLoading } = useLoading();
   const snapPoints = useMemo(() => ["40%"], []);
   const invalidateSheetRef = useRef<BottomSheetModal>(null);
   const notLoadedSheetRef = useRef<BottomSheetModal>(null);
@@ -47,6 +54,28 @@ export default function OrderSheet({
   const closeNotLoadedSheet = useCallback(() => {
     notLoadedSheetRef.current?.dismiss();
   }, []);
+
+  const handleAcceptAssignment = async () => {
+    try {
+      closeSheet();
+      setLoading(true);
+      const payload = {
+        Id: roadmap.Id,
+        orders: [selectedOrder.Id],
+      };
+      await confirmOrderAssignment(payload);
+      showSnackbar("Pedido marcado como cargado exitosamente.", "success");
+    } catch (error) {
+      console.log(error);
+      showSnackbar(
+        error?.response?.data?.errors?.Messages?.[0] ||
+          "Error al Marcar como Cargado.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -77,7 +106,7 @@ export default function OrderSheet({
               Pedido: {selectedOrder?.Numero}
             </Text>
             <TouchableRipple
-              onPress={closeSheet}
+              onPress={handleAcceptAssignment}
               rippleColor="rgb(67, 170, 177)"
               style={{
                 flexDirection: "row",

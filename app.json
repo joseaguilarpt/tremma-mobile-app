@@ -4,7 +4,7 @@
     "slug": "tremma-mobile-app",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./src/assets/images/tremma-lg.png",
+    "icon": "./src/assets/images/arrow-lg.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,7 +12,7 @@
       "supportsTablet": true
     },
     "splash": {
-      "image": "./src/assets/images/tremma-lg.png",
+      "image": "./src/assets/images/arrow-lg.png",
       "imageWidth": 300,
       "resizeMode": "contain",
       "backgroundColor": "#1f223a"

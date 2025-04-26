@@ -1,14 +1,12 @@
 import React, { useCallback } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Appbar, Text } from "react-native-paper";
-import {
-  useFocusEffect,
-  useNavigation,
-} from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import { getRoadmapById } from "@/api/roadmap";
 import { useAuth } from "@/context/auth";
+import { useLoading } from "@/context/loading.utils";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
@@ -19,9 +17,10 @@ function Roadmap({ id }: { id: string }) {
   const [roadmap, setRoadmap] = React.useState({});
   const { user } = useAuth();
   const { showSnackbar } = useNotifications();
-
+  const { setLoading } = useLoading();
   const fetchData = async () => {
     try {
+      setLoading(true);
       const response = await getRoadmapById(id);
       setRoadmap(response);
     } catch (error) {
@@ -29,14 +28,16 @@ function Roadmap({ id }: { id: string }) {
         "Error al carga la hoja de ruta, por favor intente nuevamente",
         "error"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   const formatMoney = (value: number) =>
-    new Intl.NumberFormat("es-CR", { style: "currency", currency: "CRC" }).format(
-      value
-    );
-  
+    new Intl.NumberFormat("es-CR", {
+      style: "currency",
+      currency: "CRC",
+    }).format(value);
 
   const data = [
     {
@@ -93,16 +94,19 @@ function Roadmap({ id }: { id: string }) {
               </View>
             }
           />
-          <Appbar.Action icon="send"  onPress={() => {
-            showSnackbar(
-              "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-              "error"
-            );
-          }} />
+          <Appbar.Action
+            icon="send"
+            onPress={() => {
+              showSnackbar(
+                "Para continuar, asegúrate de que todos los pedidos estén marcados.",
+                "error"
+              );
+            }}
+          />
         </Appbar.Header>
         <View style={styles.container}>
-        <Text variant="titleMedium">Vehiculo Asignado:</Text>
-        <View style={styles.cards}>
+          <Text variant="titleMedium">Vehiculo Asignado:</Text>
+          <View style={styles.cards}>
             <View style={styles.card}>
               <Text variant="titleMedium">Placa:</Text>
             </View>
@@ -120,9 +124,9 @@ function Roadmap({ id }: { id: string }) {
                   <Text variant="titleMedium">{item.label}:</Text>
                 </View>
                 <View style={styles.card}>
-                  <Text>{item.value ?? '-'}</Text>
+                  <Text>{item.value ?? "-"}</Text>
                 </View>
-              </ React.Fragment>
+              </React.Fragment>
             ))}
           </View>
         </View>

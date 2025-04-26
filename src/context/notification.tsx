@@ -6,11 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { StyleSheet } from "react-native";
-import {
-  Snackbar,
-  Banner,
-  Text,
-} from "react-native-paper";
+import { Snackbar, Banner, Text } from "react-native-paper";
 import dayjs from "dayjs";
 import { getCommunications } from "../api/communication";
 import { useAuth } from "./auth";
@@ -118,25 +114,29 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
           snackbarSeverity === "error" && styles.snackbarError,
           snackbarSeverity === "success" && styles.snackbarSuccess,
         ]}
+        action={{
+          labelStyle: { color: "white" },
+          label: "Cerrar",
+          icon: "close",
+          onPress: () => handleSnackbarClose(),
+        }}
       >
         <Text>{snackbarMessage}</Text>
       </Snackbar>
 
       {/* Alert Modal */}
       <Banner
-      
         visible={modalVisible}
         actions={[
           {
             label: "Cancelar",
-            onPress: () => modalOnCancel()
+            onPress: () => modalOnCancel(),
           },
           {
             label: "Continuar",
             onPress: () => modalOnConfirm(),
           },
         ]}
-        
       >
         <Text>{modalMessage}</Text>
       </Banner>

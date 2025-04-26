@@ -6,10 +6,12 @@ import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import { getRoadmapById } from "@/api/roadmap";
 import { useAuth } from "@/context/auth";
-import { getOrdersList } from "@/api/orders";
+import { getOrdersByDate, getOrdersList } from "@/api/orders";
 import OrderCard from "@/components/OrderCard/OrderCard";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import OrderSheet from "@/components/OrderMenu";
+import { dayCR } from "@/utils/dates";
+import { useLoading } from "@/context/loading.utils";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
@@ -20,14 +22,17 @@ function Orders({ id }: { id: string }) {
   const theme = useTheme();
   const { user } = useAuth();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-
+  const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
 
   const [orders, setOrders] = React.useState([]);
+  const [roadmap, setRoadmap] = React.useState(null);
   const [selectedOrder, setSelectedOrder] = React.useState(null);
   const fetchData = async () => {
     try {
+      setLoading(true);
       const response = await getRoadmapById(id);
+      setRoadmap(response);
       const orders = await getOrdersList({ hojaRutaId: response?.Id });
       setOrders(orders);
     } catch (error) {
@@ -35,6 +40,8 @@ function Orders({ id }: { id: string }) {
         "Error al carga la hoja de ruta, por favor intente nuevamente",
         "error"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,7 +53,6 @@ function Orders({ id }: { id: string }) {
     bottomSheetRef.current?.dismiss();
   }, []);
 
-  console.log(JSON.stringify(orders, null, 2));
   const formatMoney = (value: number) =>
     new Intl.NumberFormat("es-CR", {
       style: "currency",
@@ -82,12 +88,15 @@ function Orders({ id }: { id: string }) {
               </View>
             }
           />
-          <Appbar.Action icon="send"  onPress={() => {
-            showSnackbar(
-              "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-              "error"
-            );
-          }} />
+          <Appbar.Action
+            icon="send"
+            onPress={() => {
+              showSnackbar(
+                "Para continuar, asegúrate de que todos los pedidos estén marcados.",
+                "error"
+              );
+            }}
+          />
         </Appbar.Header>
         <View style={styles.container}>
           <Text variant="titleMedium">
@@ -106,6 +115,7 @@ function Orders({ id }: { id: string }) {
           </View>
         </View>
         <OrderSheet
+          roadmap={roadmap}
           closeSheet={closeSheet}
           selectedOrder={selectedOrder}
           bottomSheetRef={bottomSheetRef}
