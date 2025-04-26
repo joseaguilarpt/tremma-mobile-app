@@ -1,6 +1,6 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import * as Notifications from 'expo-notifications';
+import * as Notifications from "expo-notifications";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -32,6 +32,9 @@ import { ConnectivityProvider } from "@/context/connection";
 import { sendNotification, useNotificationSetup } from "@/utils/notifications";
 import Roadmap from "@/screens/Roadmap";
 import RoadmapView from "@/screens/RoadmapScreen";
+import "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -147,18 +150,22 @@ export default function App() {
   const theme =
     colorScheme === "dark" ? CombinedDarkTheme : CombinedDefaultTheme;
   return (
-    <PaperProvider theme={theme}>
-      <ConnectivityProvider>
-        <NavigationContainer theme={theme} ref={navigationRef}>
-          <ErrorBoundary>
-            <AppProviders>
-              <Router />
-              <StatusBar style="auto" />
-              <ThemedView onLayout={onLayoutRootView} />
-            </AppProviders>
-          </ErrorBoundary>
-        </NavigationContainer>
-      </ConnectivityProvider>
-    </PaperProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PaperProvider theme={theme}>
+        <BottomSheetModalProvider>
+          <ConnectivityProvider>
+            <NavigationContainer theme={theme} ref={navigationRef}>
+              <ErrorBoundary>
+                <AppProviders>
+                  <Router />
+                  <StatusBar style="auto" />
+                  <ThemedView onLayout={onLayoutRootView} />
+                </AppProviders>
+              </ErrorBoundary>
+            </NavigationContainer>
+          </ConnectivityProvider>
+        </BottomSheetModalProvider>
+      </PaperProvider>
+    </GestureHandlerRootView>
   );
 }

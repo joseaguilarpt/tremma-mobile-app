@@ -1,119 +1,57 @@
-import React, { useCallback, useState } from "react";
-import { View, StyleSheet, ScrollView, Animated } from "react-native";
-import { Appbar, Chip, Text, useTheme } from "react-native-paper";
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from "@react-navigation/native";
+import React, { useCallback, useRef } from "react";
+import { View, StyleSheet, ScrollView } from "react-native";
+import { Appbar, Text, useTheme } from "react-native-paper";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
-import { getRoadmapsList } from "@/api/roadmap";
+import { getRoadmapById } from "@/api/roadmap";
 import { useAuth } from "@/context/auth";
-import dayjs from "dayjs";
-import { dayCR } from "@/utils/dates";
+import { getOrdersList } from "@/api/orders";
+import OrderCard from "@/components/OrderCard/OrderCard";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import OrderSheet from "@/components/OrderMenu";
 
 const Spacer = ({ size = 8, horizontal = false }) => (
   <View style={{ [horizontal ? "width" : "height"]: size }} />
 );
 
 function Orders({ id }: { id: string }) {
-  const theme = useTheme();
   const navigator = useNavigation();
-  const [datesDrawerVisible, setDatesDrawerVisible] = useState(false);
-  const translateY = React.useRef(new Animated.Value(300)).current; // Animación para el Drawer
-  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false); // Estado para el filtro del Drawer
-  const [filter, setFilter] = useState(""); // Estado para el filtro
-  const [selectedRange, setSelectedRange] = useState<{
-    startDate: string | null;
-    endDate: string | null;
-  }>({
-    startDate: null,
-    endDate: null,
-  });
-  const [roadmaps, setRoadmaps] = React.useState([]);
-  const [statistics, setStatistics] = React.useState({
-    orders: 0,
-    returns: 0,
-    roadmaps: 0,
-  });
-
+  const theme = useTheme();
   const { user } = useAuth();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
   const { showSnackbar } = useNotifications();
 
-  const openDrawer = () => {
-    setDatesDrawerVisible(true);
-    if (filterDrawerVisible) {
-      closeFilterDrawer();
-    }
-    Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia arriba
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeDrawer = () => {
-    Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia abajo
-      useNativeDriver: true,
-    }).start(() => setDatesDrawerVisible(false));
-  };
-
-  const openFilterDrawer = () => {
-    setFilterDrawerVisible(true);
-    if (datesDrawerVisible) {
-      closeDrawer();
-    }
-    Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia arriba
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeFilterDrawer = () => {
-    Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia abajo
-      useNativeDriver: true,
-    }).start(() => setFilterDrawerVisible(false));
-  };
-
-  const applyFilter = () => {
-    closeFilterDrawer();
-  };
-
+  const [orders, setOrders] = React.useState([]);
+  const [selectedOrder, setSelectedOrder] = React.useState(null);
   const fetchData = async () => {
     try {
-      const { Items = [], TotalCount } = await getRoadmapsList({
-        Conductor: user.Id,
-        PageSize: 1000,
-        MinDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        MaxnDate: dayCR().startOf("D").add(1, 'M').format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        // Estado: "Pendiente"
-      });
-      setRoadmaps(Items);
-      const totalOrders = (Items ?? []).reduce((acc, item) => {
-        acc += item.TotalPedidos;
-        return acc;
-      }, 0);
-      const totalReturns = (Items ?? []).reduce((acc, item) => {
-        if (item.TotalDevoluciones) {
-          acc += item.TotalDevoluciones;
-        }
-        return acc;
-      }, 0);
-
-      setStatistics({
-        orders: totalOrders,
-        returns: totalReturns,
-        roadmaps: TotalCount,
-      });
+      const response = await getRoadmapById(id);
+      const orders = await getOrdersList({ hojaRutaId: response?.Id });
+      setOrders(orders);
     } catch (error) {
       showSnackbar(
-        "Error al cargar las hojas de ruta, por favor intente nuevamente",
+        "Error al carga la hoja de ruta, por favor intente nuevamente",
         "error"
       );
     }
   };
+
+  const openSheet = useCallback(() => {
+    bottomSheetRef.current?.present();
+  }, []);
+
+  const closeSheet = useCallback(() => {
+    bottomSheetRef.current?.dismiss();
+  }, []);
+
+  console.log(JSON.stringify(orders, null, 2));
+  const formatMoney = (value: number) =>
+    new Intl.NumberFormat("es-CR", {
+      style: "currency",
+      currency: "CRC",
+    }).format(value);
 
   const initialize = useCallback(() => {
     if (user?.id) {
@@ -123,49 +61,17 @@ function Orders({ id }: { id: string }) {
 
   useFocusEffect(initialize);
 
-  const filteredRoadmaps = roadmaps.filter((item) => {
-    const matchesFilter = () => {
-      const filterLower = filter.toLowerCase();
-      return (
-        item.Numero.toLowerCase().includes(filterLower) ||
-        item.Ruta?.toLowerCase()?.includes(filterLower)
-      );
-    };
-
-    const matchesDateRange = () => {
-      const itemDate = dayCR(item.Fecha);
-      return itemDate.isBetween(
-        dayCR(selectedRange.startDate),
-        dayCR(selectedRange.endDate),
-        "day",
-        "[]"
-      );
-    };
-
-    if (filter && selectedRange.startDate && selectedRange.endDate) {
-      return matchesFilter() && matchesDateRange();
-    }
-    if (filter) {
-      return matchesFilter();
-    }
-    if (selectedRange.startDate && selectedRange.endDate) {
-      return matchesDateRange();
-    }
-    return true;
-  });
-
+  const handleClick = (order) => {
+    setSelectedOrder(order);
+    openSheet();
+  };
   return (
     <ProtectedRoute>
       <ScrollView>
         <Appbar.Header>
           <Appbar.BackAction
             onPress={() => {
-              if (datesDrawerVisible || filterDrawerVisible) {
-                closeDrawer();
-                closeFilterDrawer();
-              } else {
-                navigator.goBack();
-              }
+              navigator.goBack();
             }}
           />
           <Appbar.Content
@@ -176,69 +82,71 @@ function Orders({ id }: { id: string }) {
               </View>
             }
           />
-          <Appbar.Action icon="send" onPress={openFilterDrawer} />
+          <Appbar.Action icon="send"  onPress={() => {
+            showSnackbar(
+              "Para continuar, asegúrate de que todos los pedidos estén marcados.",
+              "error"
+            );
+          }} />
         </Appbar.Header>
-        <Text>Pedidos en desarrollo...</Text>
+        <View style={styles.container}>
+          <Text variant="titleMedium">
+            {orders.length > 0 ? orders?.length : ""} Pedido(s):
+          </Text>
+          <Spacer size={16} />
+          <View style={styles.cards}>
+            {orders.map((order) => (
+              <OrderCard
+                onClick={handleClick}
+                key={order.Numero}
+                order={order}
+                color="rgb(18, 86, 107)"
+              />
+            ))}
+          </View>
+        </View>
+        <OrderSheet
+          closeSheet={closeSheet}
+          selectedOrder={selectedOrder}
+          bottomSheetRef={bottomSheetRef}
+        />
       </ScrollView>
     </ProtectedRoute>
   );
 }
 
 const styles = StyleSheet.create({
+  drawer: {
+    width: "100%",
+  },
   container: {
     paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
     paddingTop: 16, // Evita solapamiento con la StatusBar en Android
   },
   divider: {
-    margin: 16,
+    margin: 12,
+    borderColor: "white",
+    borderBottomWidth: 1,
   },
-  avatar: {
-    marginLeft: 10,
+  contentContainer: {
+    flex: 1,
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    // backgroundColor: "rgba(46, 64, 82, 0.8)",
   },
-  settings: {
-    flexDirection: "row", // Llenar las filas de manera horizontal
-    flexWrap: "wrap", // Permite que los elementos se muevan a la siguiente línea
-    //alignItems: "center", // Alineación vertical
-    justifyContent: "flex-start", // Alineación entre los elementos    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-  },
-  surface: {
-    height: 200,
-    marginTop: 20,
-    backgroundColor: "rgba(46, 64, 82, 0.8)",
-    borderRadius: 10,
-  },
+
   truck: {
     width: 400,
     height: 200,
     alignSelf: "center",
     resizeMode: "contain",
   },
-  cards: {
-    marginTop: 20,
-    display: "flex",
-    //flexDirection: "row",
-    //alignItems: "center",
-  },
+  cards: {},
   card: {
-    backgroundColor: "rgba(46, 64, 82, 0.8)",
-    borderRadius: 10,
     padding: 20,
+    width: "50%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  roadmapCards: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-  },
-  cardTop: {
-    backgroundColor: "rgba(231, 87, 31, 0.8)",
-    borderRadius: 10,
-    padding: 20,
-    flexDirection: "row",
-    alignItems: "flex-start",
     justifyContent: "flex-start",
   },
 });

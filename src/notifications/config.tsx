@@ -48,7 +48,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     }
     sendNotification({
       title: "Tremma",
-      body: `Tiene ${messagesList?.length ?? ""} mensajes Nuevos.`,
+      body: `Tiene mensajes nuevos.`,
     });
     await AsyncStorage.setItem("last_messages_check", new Date().toISOString());
     return BackgroundFetch.BackgroundFetchResult.NewData;
