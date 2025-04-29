@@ -6,7 +6,7 @@ import { BottomNavigation, useTheme } from "react-native-paper";
 // @ts-ignore
 import Icon from "react-native-vector-icons/FontAwesome";
 import SettingsScreen from "../Settings";
-import Dashboard from "../Dashboard";
+import Dashboard from "@/components/Dashboard";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import Roadmaps from "../Roadmaps";
 
@@ -17,6 +17,7 @@ export default function HomeView() {
   return (
     <ProtectedRoute>
       <Tab.Navigator
+        id={undefined}
         screenOptions={{
           headerShown: false,
         }}
@@ -24,7 +25,7 @@ export default function HomeView() {
           <BottomNavigation.Bar
             navigationState={state}
             safeAreaInsets={insets}
-            style={{ backgroundColor: theme.colors.surface }} // Set your desired background color here
+            style={{ backgroundColor: theme.colors.surface }}
             inactiveColor={theme.colors.secondary}
             activeColor={theme.colors.onPrimary}
             onTabPress={({ route, preventDefault }) => {
@@ -53,14 +54,7 @@ export default function HomeView() {
             }}
             getLabelText={({ route }) => {
               const { options } = descriptors[route.key];
-              const label =
-                options.tabBarLabel !== undefined
-                  ? options.tabBarLabel
-                  : options.title !== undefined
-                  ? options.title
-                  : route.title;
-
-              return label;
+              return options.tabBarLabel ?? options.title;
             }}
           />
         )}

@@ -8,7 +8,10 @@ import {
   TouchableRipple,
   Button,
 } from "react-native-paper";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "@/types/Routes";
+import { useNavigation } from "@react-navigation/native";
 import NavigationBar from "@/components/NavigationBar/NavigationBar";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
@@ -17,14 +20,11 @@ import { useAuth } from "@/context/auth";
 import RoadmapCard from "@/components/RoadmapCard/RoadmapCard";
 import { dayCR } from "@/utils/dates";
 import { useLoading } from "@/context/loading.utils";
-
-const Spacer = ({ size = 8, horizontal = false }) => (
-  <View style={{ [horizontal ? "width" : "height"]: size }} />
-);
+import Spacer from "@/components/Spacer/Spacer";
 
 function Dashboard() {
   const theme = useTheme();
-  const navigator = useNavigation();
+  const navigator = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { setLoading }= useLoading();
   const [roadmaps, setRoadmaps] = React.useState([]);
   const [statistics, setStatistics] = React.useState({
@@ -46,7 +46,9 @@ function Dashboard() {
       });
       setRoadmaps(Items);
       const totalOrders = (Items ?? []).reduce((acc, item) => {
-        acc += item.TotalPedidos;
+        if (item.TotalPedidos) {
+          acc += item.TotalPedidos;
+        }
         return acc;
       }, 0);
       const totalReturns = (Items ?? []).reduce((acc, item) => {
@@ -85,11 +87,11 @@ function Dashboard() {
       <ScrollView>
         <NavigationBar />
         <View style={styles.container}>
-          <Text variant="titleLarge">Bienvenido a Tremma</Text>
+          <Text variant="titleLarge">Bienvenido a Arrow</Text>
           <Surface style={styles.surface} elevation={4}>
             <Image
               source={require("../../assets/images/tremma-car.png")}
-              style={styles.truck}
+              style={styles.companyImage}
             />
           </Surface>
           <View style={styles.cards}>
@@ -193,8 +195,8 @@ function Dashboard() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingTop: 16, // Evita solapamiento con la StatusBar en Android
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   divider: {
     margin: 16,
@@ -202,16 +204,8 @@ const styles = StyleSheet.create({
   avatar: {
     marginLeft: 10,
   },
-  settings: {
-    flexDirection: "row", // Llenar las filas de manera horizontal
-    flexWrap: "wrap", // Permite que los elementos se muevan a la siguiente línea
-    //alignItems: "center", // Alineación vertical
-    justifyContent: "flex-start", // Alineación entre los elementos    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-  },
   flex: {
     paddingLeft: 20,
-    // display: 'flex'
   },
   surface: {
     height: 200,
@@ -219,7 +213,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(46, 64, 82, 0.8)",
     borderRadius: 10,
   },
-  truck: {
+  companyImage: {
     width: 400,
     height: 200,
     alignSelf: "center",
@@ -228,8 +222,6 @@ const styles = StyleSheet.create({
   cards: {
     marginTop: 20,
     display: "flex",
-    //flexDirection: "row",
-    //alignItems: "center",
   },
   card: {
     backgroundColor: "rgba(46, 64, 82, 0.8)",

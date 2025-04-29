@@ -22,6 +22,8 @@ import "dayjs/locale/es";
 import isBetween from "dayjs/plugin/isBetween";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { dayCR } from "@/utils/dates";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "@/types/Routes";
 
 dayjs.extend(isBetween);
 
@@ -36,7 +38,7 @@ const formatMessageDate = (dateString: string) => {
   } else if (date.isSame(dayCR().subtract(1, "d"), "d")) {
     return "Ayer";
   } else if (date.isSame(dayCR(), "year")) {
-    return date.format("D MMM"); // Ej: "5 abr"
+    return date.format("D MMM");
   } else {
     return date.format("D MMM YYYY");
   }
@@ -47,13 +49,13 @@ const setTruncatedText = (v: string, max: number = 50) => {
 };
 
 export default function Messages() {
-  const navigator = useNavigation();
+  const navigator =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { messages, getMessages } = useNotifications();
-  const theme = useTheme();
   const [datesDrawerVisible, setDatesDrawerVisible] = useState(false);
-  const translateY = React.useRef(new Animated.Value(300)).current; // Animación para el Drawer
-  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false); // Estado para el filtro del Drawer
-  const [filter, setFilter] = useState(""); // Estado para el filtro
+  const translateY = React.useRef(new Animated.Value(300)).current;
+  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+  const [filter, setFilter] = useState("");
   const [selectedRange, setSelectedRange] = useState<{
     startDate: string | null;
     endDate: string | null;
@@ -65,8 +67,8 @@ export default function Messages() {
   useEffect(() => {
     getMessages();
   }, []);
+  const theme = useTheme();
 
-  // Función para generar fechas intermedias entre la fecha de inicio y fin
   const generateIntermediateDates = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -74,7 +76,7 @@ export default function Messages() {
 
     while (start < end) {
       start.setDate(start.getDate() + 1);
-      dates.push(start.toISOString().split("T")[0]); // Agregar fecha en formato YYYY-MM-DD
+      dates.push(start.toISOString().split("T")[0]);
     }
 
     return dates;
@@ -85,18 +87,17 @@ export default function Messages() {
     markedDates[selectedRange.startDate] = {
       selected: true,
       startingDate: true,
-      color: "rgba(255, 74, 2, 0.8)",
+      color: theme.colors.primary,
     };
   }
   if (selectedRange.endDate) {
     markedDates[selectedRange.endDate] = {
       selected: true,
       endingDay: true,
-      color: "rgba(255, 74, 2, 0.8)",
+      color: theme.colors.primary,
     };
   }
 
-  // Marcar las fechas intermedias con un color diferente
   if (selectedRange.startDate && selectedRange.endDate) {
     const intermediateDates = generateIntermediateDates(
       selectedRange.startDate,
@@ -116,14 +117,14 @@ export default function Messages() {
       closeFilterDrawer();
     }
     Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia arriba
+      toValue: 0,
       useNativeDriver: true,
     }).start();
   };
 
   const closeDrawer = () => {
     Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia abajo
+      toValue: 0,
       useNativeDriver: true,
     }).start(() => setDatesDrawerVisible(false));
   };
@@ -134,14 +135,14 @@ export default function Messages() {
       closeDrawer();
     }
     Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia arriba
+      toValue: 0,
       useNativeDriver: true,
     }).start();
   };
 
   const closeFilterDrawer = () => {
     Animated.spring(translateY, {
-      toValue: 0, // Mueve el Drawer hacia abajo
+      toValue: 0,
       useNativeDriver: true,
     }).start(() => setFilterDrawerVisible(false));
   };

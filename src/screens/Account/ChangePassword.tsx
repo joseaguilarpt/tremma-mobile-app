@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     paddingTop: 36,
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
+    paddingHorizontal: 16,
   },
   card: {
     padding: 16,

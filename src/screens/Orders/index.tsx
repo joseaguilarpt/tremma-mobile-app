@@ -1,25 +1,20 @@
 import React, { useCallback, useRef } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { Appbar, Text, useTheme } from "react-native-paper";
+import { Appbar, Text } from "react-native-paper";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import { getRoadmapById } from "@/api/roadmap";
 import { useAuth } from "@/context/auth";
-import { getOrdersByDate, getOrdersList } from "@/api/orders";
+import { getOrdersList } from "@/api/orders";
 import OrderCard from "@/components/OrderCard/OrderCard";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import OrderSheet from "@/components/OrderMenu";
-import { dayCR } from "@/utils/dates";
 import { useLoading } from "@/context/loading.utils";
-
-const Spacer = ({ size = 8, horizontal = false }) => (
-  <View style={{ [horizontal ? "width" : "height"]: size }} />
-);
+import Spacer from "@/components/Spacer/Spacer";
 
 function Orders({ id }: { id: string }) {
   const navigator = useNavigation();
-  const theme = useTheme();
   const { user } = useAuth();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const { setLoading } = useLoading();
@@ -52,12 +47,6 @@ function Orders({ id }: { id: string }) {
   const closeSheet = useCallback(() => {
     bottomSheetRef.current?.dismiss();
   }, []);
-
-  const formatMoney = (value: number) =>
-    new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-    }).format(value);
 
   const initialize = useCallback(() => {
     if (user?.id) {
@@ -103,7 +92,7 @@ function Orders({ id }: { id: string }) {
             {orders.length > 0 ? orders?.length : ""} Pedido(s):
           </Text>
           <Spacer size={16} />
-          <View style={styles.cards}>
+          <View>
             {orders.map((order) => (
               <OrderCard
                 onClick={handleClick}
@@ -126,37 +115,13 @@ function Orders({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
-  drawer: {
-    width: "100%",
-  },
   container: {
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingTop: 16, // Evita solapamiento con la StatusBar en Android
-  },
-  divider: {
-    margin: 12,
-    borderColor: "white",
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   contentContainer: {
     flex: 1,
     alignItems: "flex-start",
-    justifyContent: "flex-start",
-    // backgroundColor: "rgba(46, 64, 82, 0.8)",
-  },
-
-  truck: {
-    width: 400,
-    height: 200,
-    alignSelf: "center",
-    resizeMode: "contain",
-  },
-  cards: {},
-  card: {
-    padding: 20,
-    width: "50%",
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "flex-start",
   },
 });

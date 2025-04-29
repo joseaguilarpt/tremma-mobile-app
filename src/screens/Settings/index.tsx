@@ -14,13 +14,16 @@ import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "@/types/Routes";
 
 function SettingsScreen() {
   const theme = useTheme();
   const { setLoading, isLoading: loading } = useLoading();
   const { showSnackbar } = useNotifications();
   const { user, imageSrc, logout } = useAuth();
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleLogout = async () => {
     setLoading(true);
@@ -98,8 +101,8 @@ function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingTop: 16, // Evita solapamiento con la StatusBar en Android
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   divider: {
     margin: 16,
@@ -108,15 +111,13 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   settings: {
-    flexDirection: "row", // Llenar las filas de manera horizontal
-    flexWrap: "wrap", // Permite que los elementos se muevan a la siguiente línea
-    //alignItems: "center", // Alineación vertical
-    justifyContent: "flex-start", // Alineación entre los elementos    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    paddingHorizontal: 16,
   },
   flex: {
     paddingLeft: 20,
-    // display: 'flex'
   },
 });
 

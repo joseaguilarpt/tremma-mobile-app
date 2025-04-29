@@ -7,14 +7,12 @@ import { useNotifications } from "@/context/notification";
 import { getRoadmapById } from "@/api/roadmap";
 import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
-
-const Spacer = ({ size = 8, horizontal = false }) => (
-  <View style={{ [horizontal ? "width" : "height"]: size }} />
-);
+import { Roadmap as RoadmapType } from "@/types/Roadmap";
+import { formatMoney } from "@/utils/money";
 
 function Roadmap({ id }: { id: string }) {
   const navigator = useNavigation();
-  const [roadmap, setRoadmap] = React.useState({});
+  const [roadmap, setRoadmap] = React.useState<Partial<RoadmapType>>({});
   const { user } = useAuth();
   const { showSnackbar } = useNotifications();
   const { setLoading } = useLoading();
@@ -32,12 +30,6 @@ function Roadmap({ id }: { id: string }) {
       setLoading(false);
     }
   };
-
-  const formatMoney = (value: number) =>
-    new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-    }).format(value);
 
   const data = [
     {
@@ -137,18 +129,8 @@ function Roadmap({ id }: { id: string }) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingTop: 16, // Evita solapamiento con la StatusBar en Android
-  },
-  divider: {
-    margin: 16,
-  },
-
-  truck: {
-    width: 400,
-    height: 200,
-    alignSelf: "center",
-    resizeMode: "contain",
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   cards: {
     marginTop: 20,
@@ -159,7 +141,6 @@ const styles = StyleSheet.create({
 
     backgroundColor: "rgba(46, 64, 82, 0.8)",
     borderRadius: 10,
-    //alignItems: "center",
   },
   card: {
     padding: 20,

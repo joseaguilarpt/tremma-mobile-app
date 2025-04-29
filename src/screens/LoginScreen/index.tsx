@@ -1,10 +1,10 @@
 import { clearAuthData } from "@/api";
-import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
-import AppProviders from "@/context/providers";
+import { RootStackParamList } from "@/types/Routes";
 import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
 import { GestureResponderEvent, Image, StyleSheet, View } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
@@ -12,7 +12,8 @@ import { Button, Text, TextInput, useTheme } from "react-native-paper";
 const LoginScreen = () => {
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const navigation = useNavigation()
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const { login } = useAuth();
   const { showSnackbar } = useNotifications();
@@ -124,8 +125,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
-    paddingHorizontal: 16, // Espaciado lateral para que no quede pegado a los bordes
-    paddingTop: 16, // Evita solapamiento con la StatusBar en Android
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   center: {
     textAlign: "center",
@@ -138,6 +139,5 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
 });
-
 
 export default LoginScreen;

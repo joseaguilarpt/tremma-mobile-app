@@ -1,11 +1,7 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import * as Notifications from "expo-notifications";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import HomeView from "./src/screens/HomeScreen";
-import NotFoundScreen from "./src/screens/+not-found";
 import {
   ActivityIndicator,
   PaperProvider,
@@ -21,72 +17,17 @@ import * as SplashScreen from "expo-splash-screen";
 import { ThemedView } from "@/components/ThemedView";
 import { useFonts } from "expo-font";
 import ErrorBoundary from "./src/components/ErrorBoundary";
-import LoginScreen from "@/screens/LoginScreen";
 import AppProviders from "@/context/providers";
-import ChangePassword from "@/screens/Account/ChangePassword";
-import Messages from "@/screens/Messages/Messages";
-import SettingsScreen from "@/screens/Settings";
-import AddMessage from "@/screens/Messages/AddMessage";
 import { navigationRef } from "@/utils/navigation";
 import { ConnectivityProvider } from "@/context/connection";
-import { sendNotification, useNotificationSetup } from "@/utils/notifications";
-import Roadmap from "@/screens/Roadmap";
-import RoadmapView from "@/screens/RoadmapScreen";
+import { useNotificationSetup } from "@/utils/notifications";
 import "react-native-gesture-handler";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import Router from "./Router";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
-
-const Stack = createNativeStackNavigator();
-
-function Router() {
-  return (
-    <Stack.Navigator id={undefined}>
-      <Stack.Screen
-        name="Home"
-        component={HomeView}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Roadmap"
-        component={RoadmapView}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Login"
-        component={LoginScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ChangePassword"
-        component={ChangePassword}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Cuenta"
-        component={HomeView}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Messages"
-        component={Messages}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="AddMessage"
-        component={AddMessage}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="NotFound"
-        component={NotFoundScreen}
-        options={{ headerShown: false }}
-      />
-    </Stack.Navigator>
-  );
-}
 
 export default function App() {
   const [appIsReady, setAppIsReady] = React.useState(false);
@@ -96,14 +37,7 @@ export default function App() {
 
   React.useEffect(() => {
     async function prepare() {
-      try {
-        // Simulate loading resources (e.g., fonts, API calls)
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setAppIsReady(true);
-      }
+      setAppIsReady(true);
     }
 
     prepare();
@@ -144,7 +78,7 @@ export default function App() {
   };
 
   if (!appIsReady || !fontsLoaded) {
-    return <ActivityIndicator />; // Render nothing while loading resources
+    return <ActivityIndicator />;
   }
 
   const theme =
