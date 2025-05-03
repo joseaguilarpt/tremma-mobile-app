@@ -1,4 +1,4 @@
-import { Animated, View } from "react-native";
+import { View } from "react-native";
 import { Button, Drawer, useTheme } from "react-native-paper";
 import { Calendar } from "react-native-calendars";
 
@@ -20,7 +20,6 @@ export default function DatesDrawer({
 }: DatesDrawerProps) {
     const theme = useTheme();
 
-    // Función para generar fechas intermedias entre la fecha de inicio y fin
     const generateIntermediateDates = (startDate: string, endDate: string) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -28,7 +27,7 @@ export default function DatesDrawer({
 
         while (start < end) {
             start.setDate(start.getDate() + 1);
-            dates.push(start.toISOString().split("T")[0]); // Agregar fecha en formato YYYY-MM-DD
+            dates.push(start.toISOString().split("T")[0]);
         }
 
         return dates;
@@ -50,7 +49,6 @@ export default function DatesDrawer({
         };
     }
 
-    // Marcar las fechas intermedias con un color diferente
     if (selectedRange.startDate && selectedRange.endDate) {
         const intermediateDates = generateIntermediateDates(
             selectedRange.startDate,
@@ -68,11 +66,9 @@ export default function DatesDrawer({
         const { startDate, endDate } = selectedRange;
 
         if (!startDate || (startDate && endDate)) {
-            // Si no hay fecha de inicio o ya hay un rango, seleccionamos una nueva fecha de inicio
             setSelectedRange({ startDate: day.dateString, endDate: null });
         } else {
             closeDrawer();
-            // Si ya hay una fecha de inicio, seleccionamos la fecha final
             setSelectedRange({
                 startDate,
                 endDate: day.dateString,
@@ -88,15 +84,15 @@ export default function DatesDrawer({
                     markedDates={markedDates}
                     markingType={"period"}
                     theme={{
-                        backgroundColor: theme.colors.background, // Fondo del calendario
-                        calendarBackground: theme.colors.background, // Fondo del calendario
-                        todayTextColor: "white", // Color de la fecha de hoy
+                        backgroundColor: theme.colors.background,
+                        calendarBackground: theme.colors.background,
+                        todayTextColor: "white",
                         textDayFontFamily: "sans-serif",
                         textMonthFontFamily: "sans-serif",
                         textDayHeaderFontFamily: "sans-serif",
-                        dayTextColor: "white", // Color del texto de los días
-                        arrowColor: "white", // Color de las flechas de navegación
-                        monthTextColor: "white", // Color del mes
+                        dayTextColor: "white",
+                        arrowColor: "white",
+                        monthTextColor: "white",
                     }}
                 />
             </View>

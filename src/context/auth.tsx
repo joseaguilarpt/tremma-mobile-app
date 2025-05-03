@@ -17,9 +17,9 @@ import { fetchImage } from "@/api/files";
 // Create the AuthContext
 export const AuthContext = createContext<any>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+export function AuthProvider({
   children,
-}) => {
+}) {
   const [user, setUser] = useState<any | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [roleOptions, setRoleOptions] = useState<any[]>([]);
@@ -203,6 +203,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);

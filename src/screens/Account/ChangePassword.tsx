@@ -1,6 +1,8 @@
+import { changePassword } from "@/api";
 import { getSettings } from "@/api/settings";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
-import { useAuth } from "@/context/auth";
+import { useNotifications } from "@/context/notification";
+import { parseErrors } from "@/utils/errors";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
@@ -14,8 +16,6 @@ import {
   Appbar,
   useTheme,
 } from "react-native-paper";
-// @ts-ignore
-import Icon from "react-native-vector-icons/FontAwesome";
 
 export default function ChangePassword() {
   const [password, setPassword] = useState("");
@@ -25,8 +25,8 @@ export default function ChangePassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const { showSnackbar } = useNotifications();
   const navigation = useNavigation();
-  const { user } = useAuth();
   const theme = useTheme();
   const generateValidationRules = (password: string) => {
     return passwordSettings.map((setting) => {
@@ -116,23 +116,37 @@ export default function ChangePassword() {
   };
 
   // Handle password change submission
-  const handleChangePassword = () => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
+  const handleChangePassword = async () => {
+    try {
+      if (password !== confirmPassword) {
+        showSnackbar("Passwords do not match!", "error");
+        return;
+      }
 
-    const errors = validationResults.filter((result) => !result.isValid);
-    if (errors.length > 0) {
-      alert("Please fix the validation errors.");
-      return;
-    }
+      const errors = validationResults.filter((result) => !result.isValid);
+      if (errors.length > 0) {
+        showSnackbar("Please fix the validation errors.", "error");
+        return;
+      }
 
-    // Simulate successful password update
-    alert("Password updated successfully!");
-    setPassword("");
-    setConfirmPassword("");
-    navigation.navigate("Home");
+      await changePassword({
+        password: password,
+        confirmPassword: confirmPassword,
+      });
+      setPassword("");
+      setConfirmPassword("");
+      showSnackbar("Password updated successfully!", "error");
+      navigation.navigate("Home");
+    } catch (err) {
+      const errorMessage = parseErrors(err.response.data);
+      let message =
+        "Error al cambiar la clave. Por favor, intenta nuevamente.";
+
+      if (errorMessage.length > 0) {
+        message = errorMessage[0];
+      }
+      showSnackbar(message, "error");
+    }
   };
 
   // Fetch settings and validate on mount or password change
@@ -156,7 +170,6 @@ export default function ChangePassword() {
     description: rule.description,
     isValid: rule.validation(),
   }));
-  const mandatoryChangePassword = user?.original?.CambiarClave;
 
   const filteredResults = results.filter((item) => item.description);
 
@@ -174,6 +187,7 @@ export default function ChangePassword() {
           <TextInput
             label="New Password"
             value={password}
+            testID="new-password"
             mode="outlined"
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -195,6 +209,7 @@ export default function ChangePassword() {
           {/* Confirm Password Input */}
           <TextInput
             label="Confirm Password"
+            testID="confirm-password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirmPassword}
