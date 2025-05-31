@@ -23,7 +23,12 @@
         "foregroundImage": "./src/assets/images/android-icon-96x96.png",
         "backgroundColor": "#1e1847"
       },
-      "package": "com.joseaguilarpt.tremmamobileapp",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBmhCWVx18Px9-yG4b_jiW-iu1qa7RNx8U"
+        }
+      },
+      "package": "com.tremma.mobileapp",
       "permissions": ["RECEIVE_BOOT_COMPLETED"]
     },
     "web": {
@@ -40,12 +45,14 @@
           "assets": ["./src/assets/fonts/"]
         }
       ],
-      "expo-build-properties"
+      "expo-build-properties",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
+      "googleMapsApiKey": "AIzaSyBmhCWVx18Px9-yG4b_jiW-iu1qa7RNx8U",
       "router": {
         "origin": false
       },

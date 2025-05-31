@@ -21,12 +21,16 @@ import RoadmapCard from "@/components/RoadmapCard/RoadmapCard";
 import { dayCR } from "@/utils/dates";
 import { useLoading } from "@/context/loading.utils";
 import Spacer from "@/components/Spacer/Spacer";
+import { getCurrentRoadmap } from "@/api/orders";
+import { Roadmap } from "@/types/Roadmap";
 
 function Dashboard() {
   const theme = useTheme();
-  const navigator = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { setLoading }= useLoading();
-  const [roadmaps, setRoadmaps] = React.useState([]);
+  const navigator =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { setLoading } = useLoading();
+  const [current, setCurrent] = React.useState<Roadmap | null>(null);
+  const [roadmaps, setRoadmaps] = React.useState<Roadmap[]>([]);
   const [statistics, setStatistics] = React.useState({
     orders: 0,
     returns: 0,
@@ -38,11 +42,18 @@ function Dashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const currentData = await getCurrentRoadmap();
+      if (currentData) {
+        setCurrent(currentData);
+      }
       const { Items = [], TotalCount = 0 } = await getRoadmapsList({
         Conductor: user.Id,
         PageSize: 1000,
         MinDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        MaxDate: dayCR().startOf("D").add(1, 'M').format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        MaxDate: dayCR()
+          .startOf("D")
+          .add(1, "M")
+          .format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
       });
       setRoadmaps(Items);
       const totalOrders = (Items ?? []).reduce((acc, item) => {
@@ -68,8 +79,7 @@ function Dashboard() {
         "Error al cargar las hojas de ruta, por favor intente nuevamente",
         "error"
       );
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -95,6 +105,49 @@ function Dashboard() {
             />
           </Surface>
           <View style={styles.cards}>
+            {current !== null && (
+              <Surface
+                style={[
+                  styles.cardTopData,
+                  {
+                    marginBottom: 20,
+                    backgroundColor: "rgba(231, 87, 31, 0.8)",
+                  },
+                ]}
+                elevation={4}
+              >
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <Icon
+                    source="bus-alert"
+                    size={40}
+                    color={theme.colors.onPrimary}
+                  />
+                  <View style={{ paddingLeft: 20 }}>
+                    <Text variant="titleLarge">En Curso</Text>
+                    <Text
+                      variant="bodyMedium"
+                      style={{ marginBottom: 20, fontWeight: "bold" }}
+                    >
+                      Continuar con la hoja de ruta en curso
+                    </Text>
+                  </View>
+                </View>
+                <View>
+                  <RoadmapCard
+                    color="rgb(177, 139, 67)"
+                    key={current.Id}
+                    roadmap={current}
+                    isCurrent
+                  />
+                </View>
+              </Surface>
+            )}
             {statistics.roadmaps === 0 && (
               <Surface style={styles.cardTop} elevation={4}>
                 <View>
@@ -114,7 +167,16 @@ function Dashboard() {
               </Surface>
             )}
             {statistics.roadmaps > 0 && (
-              <Surface style={styles.cardTopData} elevation={4}>
+              <Surface
+                style={[
+                  styles.cardTopData,
+                  {
+                    backgroundColor:
+                      current === null ? "rgba(231, 87, 31, 0.8)" : "",
+                  },
+                ]}
+                elevation={4}
+              >
                 <View
                   style={{
                     display: "flex",
@@ -237,7 +299,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   cardTop: {
-    backgroundColor: "rgba(231, 87, 31, 0.8)",
+    backgroundColor: "rgba(46, 64, 82, 0.8)",
     borderRadius: 10,
     padding: 20,
     flexDirection: "row",
@@ -245,7 +307,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   cardTopData: {
-    backgroundColor: "rgba(231, 87, 31, 0.8)",
+    backgroundColor: "rgba(46, 64, 82, 0.8)",
     borderRadius: 10,
     padding: 20,
   },

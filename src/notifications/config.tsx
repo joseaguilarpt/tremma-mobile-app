@@ -1,6 +1,6 @@
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
-import * as Notifications from "expo-notifications";
+//import * as Notifications from "expo-notifications";
 import { getCommunications } from "@/api/communication";
 import { getAuthData, isTokenExpired, refreshToken } from "@/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -11,13 +11,13 @@ import { dayCR } from "@/utils/dates";
 export const BACKGROUND_TASK_NAME = "background-fetch-task";
 
 // Configurar el manejador de notificaciones
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: false,
+//     shouldSetBadge: false,
+//   }),
+// });
 
 // Definir la tarea en segundo plano
 TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {

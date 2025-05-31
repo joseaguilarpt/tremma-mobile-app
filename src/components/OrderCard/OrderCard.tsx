@@ -1,17 +1,17 @@
-import { dayCR } from "@/utils/dates";
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
-import { Animated, StyleSheet, View } from "react-native";
-import {
-  Chip,
-  Surface,
-  Text,
-  TouchableRipple,
-  useTheme,
-} from "react-native-paper";
-import OrderMenu from "../OrderMenu";
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import { Chip, Surface, Text, TouchableRipple } from "react-native-paper";
+import { ListItem } from "../ListItem/ListItem";
 
-const OrderCard = ({ order, color = "rgb(18, 86, 107)", onClick }) => {
+const OrderCard = ({
+  order,
+  color = "rgb(18, 86, 107)",
+  onClick,
+  showLocation = false,
+  showTimes = false,
+  ...rest
+}) => {
   const navigator = useNavigation();
 
   const getColor = (estado) => {
@@ -24,6 +24,8 @@ const OrderCard = ({ order, color = "rgb(18, 86, 107)", onClick }) => {
         return "rgb(255, 82, 82)";
       case "No Cargado":
         return "rgb(134, 71, 71)";
+      case "Devolución":
+        return "rgb(134, 71, 71)";
       default:
         return "rgb(33, 64, 110)";
     }
@@ -32,27 +34,31 @@ const OrderCard = ({ order, color = "rgb(18, 86, 107)", onClick }) => {
   const colorValue = getColor(order.Estado);
   return (
     <>
-      <TouchableRipple onPress={() => onClick(order)} rippleColor={color}>
+      <TouchableRipple
+        onPress={() => onClick(order)}
+        rippleColor={color}
+        {...rest}
+      >
         <Surface style={styles.roadmap} elevation={4}>
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              width: "85%",
-              marginTop: 10,
-            }}
-          >
-            <View>
-              <Text variant="labelLarge">Pedido:</Text>
-              <Text variant="labelLarge">Cliente:</Text>
-              <Text variant="labelLarge">Bultos:</Text>
-            </View>
-            <View style={{ paddingLeft: 20 }}>
-              <Text variant="bodyMedium">{order.Numero ?? "-"}</Text>
-              <Text variant="bodyMedium">{`${order?.CodigoCliente} - ${order.NombreCliente}`}</Text>
-              <Text variant="bodyMedium">{order.Bultos ?? "-"}</Text>
-            </View>
-          </View>
+          {order.PedidoId && (
+            <ListItem title={"WMS"} description={order.PedidoId ?? "-"} />
+          )}
+          <ListItem title={"Pedido"} description={order.Numero ?? "-"} />
+          <ListItem
+            title={"Cliente"}
+            description={order.NombreCliente ?? "-"}
+          />
+          <ListItem title={"Bultos"} description={order.Bultos ?? "-"} />
+          {showLocation && (
+            <ListItem
+              title={"Ubicación"}
+              description={order.Direccion ?? "-"}
+            />
+          )}
+
+          {showTimes && (
+            <ListItem title={"Horario"} description={order.Horario ?? "-"} />
+          )}
           <Chip
             mode="flat"
             style={{
@@ -80,7 +86,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     marginBottom: 10,
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-start",
   },

@@ -88,11 +88,34 @@ export const getOrdersByDate = async (date: string) => {
   }
 };
 
+export const getCurrentRoadmap = async () => {
+  try {
+    const response = await api.get(
+      `/entregas/current`,
+    );
+    return response?.data;
+  } catch (e) {
+    return null
+  }
+};
+
+
 export const confirmOrderAssignment = async (payload: any) => {
   try {
     await api.put(
       `/entregas/confirmar_asignacion?hojaRutaId=${payload.Id}`,
       payload?.orders
+    );
+    return true;
+  } catch (e) {
+    throw e;
+  }
+};
+
+export const putMoveOrdersInSameRoadmap = async (payload) => {
+  try {
+    await api.put(
+      `/pedidos/asignar-secuencia?hojaRutaId=${payload.hojaRutaId}&pedidoId=${payload.pedidoId}&secuencia=${payload.secuencia}`
     );
     return true;
   } catch (e) {

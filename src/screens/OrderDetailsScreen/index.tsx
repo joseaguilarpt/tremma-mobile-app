@@ -1,24 +1,70 @@
-import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { CommonActions, useRoute } from "@react-navigation/native";
+import React, { useCallback } from "react";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  CommonActions,
+  useFocusEffect,
+  useRoute,
+} from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { BottomNavigation, useTheme } from "react-native-paper";
 // @ts-ignore
 import Icon from "react-native-vector-icons/FontAwesome";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
-import Roadmap from "../Roadmap";
-import Orders from "../Orders";
 import { useNotifications } from "@/context/notification";
+import { getOrderById } from "@/api/orders";
+import { useLoading } from "@/context/loading.utils";
+import { useAuth } from "@/context/auth";
+import OrdersMap from "@/components/Map/Map";
+import OrderDetails from "../OrderDetails";
+import { getClientById } from "@/api/clients";
+import OrderPayments from "../Payments";
 
 const Tab = createBottomTabNavigator();
 
-const OrdersTab = (props) => <Orders {...props} />;
-
-export default function RoadmapView() {
+export default function OrderDetailsScreen() {
   const theme = useTheme();
   const route = useRoute();
-  const params = route.params as { id: string };
+  const params = route.params as { [key: string]: string | number };
+
+  const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
+  const { user } = useAuth();
+
+  const [orders, setOrders] = React.useState([]);
+  const [isOpenMap, setIsOpenMap] = React.useState(false);
+  const [order, setOrder] = React.useState(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await getOrderById(params?.Id);
+      const client = await getClientById(response?.Cliente?.Codigo);
+      setOrder({
+        ...params,
+        ...response,
+        Cliente: client,
+      });
+      if (response.Id) {
+        setOrders([{ ...params, ...response }]);
+      }
+    } catch (error) {
+      showSnackbar(
+        "Error al carga el Pedido, por favor intente nuevamente",
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initialize = useCallback(() => {
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user?.id]);
+
+  useFocusEffect(initialize);
+
   return (
     <ProtectedRoute>
       <View style={{ flex: 1 }}>
@@ -68,44 +114,49 @@ export default function RoadmapView() {
           )}
         >
           <Tab.Screen
-            name="DetalleHoja"
-            options={{
-              tabBarLabel: "Detalles",
-              headerShown: false,
-              tabBarIcon: ({ color, size }) => {
-                return <Icon name="home" size={size} color={color} />;
-              },
-            }}
-          >
-            {() => <Roadmap id={params.id} />}
-          </Tab.Screen>
-          <Tab.Screen
             name="DetallePedidos"
             options={{
-              tabBarLabel: "Pedidos",
+              tabBarLabel: "Detalle",
               tabBarIcon: ({ color, size }) => {
                 return <Icon name="list" size={size} color={color} />;
               },
             }}
           >
-            {() => <OrdersTab id={params.id} />}
+            {() => (
+              <OrderDetails
+                onOrdersChange={setOrders}
+                id={params.Numero}
+                order={order}
+              />
+            )}
+          </Tab.Screen>
+          <Tab.Screen
+            name="OrderPayments"
+            options={{
+              tabBarLabel: "Pago",
+              headerShown: false,
+              tabBarIcon: ({ color, size }) => {
+                return <Icon name="money" size={size} color={color} />;
+              },
+            }}
+          >
+            {() => <OrderPayments id={params.id} orders={orders} order={order} />}
           </Tab.Screen>
         </Tab.Navigator>
-
         <TouchableOpacity
-          onPress={() => {
-            showSnackbar(
-              "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-              "error"
-            );
-          }}
+          onPress={() => setIsOpenMap(true)}
           style={[
             styles.floatingButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Icon name="plus" size={30} color="white" />
+          <Icon name="map" size={30} color="white" />
         </TouchableOpacity>
+        <OrdersMap
+          orders={orders}
+          isOpen={isOpenMap}
+          closeModal={() => setIsOpenMap(false)}
+        />
       </View>
     </ProtectedRoute>
   );

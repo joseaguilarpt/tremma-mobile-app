@@ -11,3 +11,24 @@ export interface Roadmap {
     Numero: string;
     Fecha: string;
 }
+
+export interface Order {
+  Id: number;
+  Color: string;
+  Numero: number;
+  Bultos: number;
+  HojaRuta: string;
+  CodigoCliente: string;
+  NombreCliente: string;
+  Direccion: string;
+  Horario: string;
+  Estado: string;
+  Observaciones: string;
+  CondicionPago: string;
+  Monto: number;
+  Secuencia: number;
+  Latitud: number;
+  Longitud: number;
+  PedidoId?: number;
+  Devoluciones?: Order[];
+}

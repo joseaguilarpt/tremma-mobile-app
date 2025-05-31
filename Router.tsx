@@ -7,6 +7,9 @@ import ChangePassword from "@/screens/Account/ChangePassword";
 import Messages from "@/screens/Messages/Messages";
 import AddMessage from "@/screens/Messages/AddMessage";
 import RoadmapView from "@/screens/RoadmapScreen";
+import OnGoingScreen from "@/screens/OnGoingScreen";
+import OrderDetailsScreen from "@/screens/OrderDetailsScreen";
+import ReturnDetailsScreen from "@/screens/ReturnDetailsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +26,22 @@ export default function Router() {
         component={RoadmapView}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="OnGoingOrders"
+        component={OnGoingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="OrderDetails"
+        component={OrderDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ReturnDetails"
+        component={ReturnDetailsScreen}
+        options={{ headerShown: false }}
+      />
+
       <Stack.Screen
         name="Login"
         component={LoginScreen}
@@ -56,4 +75,3 @@ export default function Router() {
     </Stack.Navigator>
   );
 }
-

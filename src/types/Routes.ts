@@ -9,6 +9,7 @@ export type RootStackParamList = ParamListBase & {
     Roadmap: undefined;
     NotFound: undefined;
     AddMessage: { id?: string };
+    OrderDetails: { [key: string]: string | number };
     RoadmapDetailsEditCreateOrderReturnDetail: { id?: string };
     RoadmapDetailsEditCreateOrderDetail: { id?: string };
 }
