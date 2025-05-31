@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tremma.mobileapp"
     },
     "splash": {
       "image": "./src/assets/images/arrow-lg.png",
@@ -25,11 +26,13 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBmhCWVx18Px9-yG4b_jiW-iu1qa7RNx8U"
+          "apiKey": "API_KEY"
         }
       },
       "package": "com.tremma.mobileapp",
-      "permissions": ["RECEIVE_BOOT_COMPLETED"]
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -42,7 +45,9 @@
       [
         "expo-font",
         {
-          "assets": ["./src/assets/fonts/"]
+          "assets": [
+            "./src/assets/fonts/"
+          ]
         }
       ],
       "expo-build-properties",
@@ -52,7 +57,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "googleMapsApiKey": "AIzaSyBmhCWVx18Px9-yG4b_jiW-iu1qa7RNx8U",
+      "googleMapsApiKey": "API_KEY",
       "router": {
         "origin": false
       },
