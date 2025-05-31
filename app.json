@@ -28,7 +28,7 @@
           "apiKey": "AIzaSyBmhCWVx18Px9-yG4b_jiW-iu1qa7RNx8U"
         }
       },
-      "package": "com.tremma.mobileapp--",
+      "package": "com.tremma.mobileapp",
       "permissions": ["RECEIVE_BOOT_COMPLETED"]
     },
     "web": {
