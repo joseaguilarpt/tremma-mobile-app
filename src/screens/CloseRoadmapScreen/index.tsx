@@ -8,58 +8,30 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { Appbar, Button, Text, TextInput } from "react-native-paper";
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
-import { getRoadmapById } from "@/api/roadmap";
-import { useAuth } from "@/context/auth";
 import * as DocumentPicker from "expo-document-picker";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useLoading } from "@/context/loading.utils";
 import DisplayList from "@/components/DisplayList";
 import { formatMoney } from "@/utils/money";
+import { useRoadmap } from "@/context/roadmap";
+import { postFile } from "@/api/files";
+import { finishRoadmap } from "@/api/orders";
 
 function CloseRoadmap({ id }: { id: string }) {
   const navigator = useNavigation();
   const route = useRoute();
   const params = route.params as { [key: string]: string | number };
-
-  const { user } = useAuth();
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const { setLoading } = useLoading();
+  const { setLoading, isLoading } = useLoading();
+  const { roadmap, refresh } = useRoadmap();
+  const [errors, setErrors] = React.useState({});
   const { showSnackbar } = useNotifications();
-  const [roadmap, setRoadmap] = React.useState(null);
   const [formState, setFormState] = React.useState({
-    Producto: "",
+    Efectivo: "",
     Observaciones: "",
+    Referencia: "",
   });
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await getRoadmapById(params?.id);
-      setRoadmap(response);
-    } catch (error) {
-      showSnackbar(
-        "Error al carga la hoja de ruta, por favor intente nuevamente",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const initialize = useCallback(() => {
-    if (user?.id) {
-      fetchData();
-    }
-  }, [user?.id]);
-
-  useFocusEffect(initialize);
 
   const data = [
     {
@@ -81,6 +53,75 @@ function CloseRoadmap({ id }: { id: string }) {
       ...prev,
       [field]: value,
     }));
+
+    if (errors[field]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: null,
+      }));
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const { blockedOrders } = await refresh();
+      if (!formState.Comprobante && roadmap.TotalContado > 0) {
+        showSnackbar("Por favor adjunte un archivo comprobante.", "error");
+        return;
+      }
+      let err = {};
+      if (!formState.Efectivo && roadmap.TotalContado > 0) {
+        err.Efectivo = "El campo Efectivo es requerido.";
+      }
+      if (!formState.Observaciones) {
+        err.Observaciones = "El campo Observaciones es requerido.";
+      }
+      if (!formState.Referencia && roadmap.TotalContado > 0) {
+        err.Referencia = "El campo Referencia es requerido.";
+      }
+
+      if (Object.keys(err).length > 0) {
+        setErrors(err);
+        showSnackbar("Por favor complete los campos requeridos.", "error");
+        return;
+      }
+
+      if (blockedOrders.length > 0) {
+        showSnackbar(
+          "No se puede ejectuar el cierre porque tiene pedidos en estado Bloqueado.",
+          "error"
+        );
+
+        return;
+      }
+
+      setLoading(true);
+      let imageId = "";
+      if (formState.Comprobante) {
+        imageId = await postFile(formState.Comprobante, "comprobantesdata");
+      }
+
+      const payload = {
+        comprobante: formState?.Referencia,
+        hojaRutaId: roadmap?.Id,
+        observaciones: formState?.Observaciones,
+        totalEfectivo: formState?.Efectivo,
+      };
+
+      if (imageId) {
+        payload.imagen = imageId;
+      }
+
+      await finishRoadmap(payload);
+      showSnackbar("Hoja de Ruta cerrada exitosamente.", "success");
+      await refresh();
+      navigator.navigate("Home");
+    } catch (error) {
+      console.log(error);
+      showSnackbar("Error al guardar pago, intente nuevamente.", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePickDocument = async () => {
@@ -96,17 +137,13 @@ function CloseRoadmap({ id }: { id: string }) {
           ...prev,
           Comprobante: result.assets[0],
         }));
-        console.log("Archivo seleccionado:", result.assets[0]);
       }
     } catch (error) {
       console.error("Error al seleccionar archivo:", error);
     }
   };
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={"height"}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={"height"}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ProtectedRoute>
           <ScrollView keyboardShouldPersistTaps="handled">
@@ -120,7 +157,7 @@ function CloseRoadmap({ id }: { id: string }) {
                 title={
                   <View>
                     <Text variant="titleMedium">Cerrar Hoja de Ruta:</Text>
-                    <Text>{params?.Numero ?? "-"}</Text>
+                    <Text>{roadmap?.Numero ?? "-"}</Text>
                   </View>
                 }
               />
@@ -156,6 +193,7 @@ function CloseRoadmap({ id }: { id: string }) {
                   multiline
                   numberOfLines={3}
                   style={styles.textArea}
+                  error={!!errors.Observaciones}
                   onChangeText={(value) =>
                     handleInputChange("Observaciones", value)
                   }
@@ -167,6 +205,8 @@ function CloseRoadmap({ id }: { id: string }) {
                 <TextInput
                   mode="outlined"
                   label="Efectivo"
+                  keyboardType="numeric"
+                  error={!!errors.Efectivo}
                   value={formState?.Efectivo}
                   onChangeText={(value) => handleInputChange("Efectivo", value)}
                 />
@@ -196,10 +236,10 @@ function CloseRoadmap({ id }: { id: string }) {
                   <TextInput
                     mode="outlined"
                     label="Referencia Comprobante"
-                    value={formState?.Efectivo}
-                    keyboardType="numeric"
+                    value={formState?.Referencia}
+                    error={!!errors.Referencia}
                     onChangeText={(value) =>
-                      handleInputChange("Efectivo", value)
+                      handleInputChange("Referencia", value)
                     }
                   />
                 </View>
@@ -217,7 +257,8 @@ function CloseRoadmap({ id }: { id: string }) {
                   icon="send"
                   style={{ marginLeft: 16 }}
                   mode="contained"
-                  //   onPress={handleSave}
+                  disabled={isLoading}
+                  onPress={handleSave}
                 >
                   Cerrar Hoja
                 </Button>

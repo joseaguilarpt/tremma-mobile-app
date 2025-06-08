@@ -221,15 +221,7 @@ function Dashboard() {
                 </View>
               </Surface>
             </TouchableRipple>
-            {current?.Id && (
-              <Button
-                onPress={() =>
-                  navigator.navigate("CloseRoadmap", { id: current.Id, ...current })
-                }
-              >
-                Temporal: Cierre de Hoja de Ruta
-              </Button>
-            )}
+            
             <Spacer size={20} />
           </View>
         </View>

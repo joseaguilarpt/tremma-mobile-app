@@ -160,4 +160,17 @@ export const putMoveOrdersInSameRoadmap = async (payload) => {
   }
 };
 
+export const finishRoadmap = async (payload) => {
+    try {
+    await api.post(
+      `/entregas/finalizar_hojaruta`,
+      payload
+    );
+    return true;
+  } catch (e) {
+    throw e;
+  }
+
+}
+
 ///api/entregas/confirmar_asignacion

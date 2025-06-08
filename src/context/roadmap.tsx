@@ -17,7 +17,7 @@ export const RoadmapProvider = ({ children }) => {
   const [order, setOrder] = React.useState<Order | any>({});
   const [paymentMethods, setPaymentMethods] = React.useState([]);
   const [payments, setPayments] = React.useState([]);
-
+  const [blockedOrders, setBlockedOrders] = React.useState([]);
   const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
 
@@ -52,12 +52,22 @@ export const RoadmapProvider = ({ children }) => {
           }
           ordersWithReturns.push(newOrder);
         });
+      setBlockedOrders((response?.Pedidos ?? []).filter((item) => item.Bloqueado));
       setOrders(ordersWithReturns);
+      return {
+        orders: ordersWithReturns,
+        roadmap: response,
+        blockedOrders: (response?.Pedidos ?? []).filter((item) => item.Bloqueado)
+      }
     } catch (error) {
       showSnackbar(
         "Error al carga la hoja de ruta, por favor intente nuevamente",
         "error"
       );
+      return {
+        orders: [],
+        roadmap: {}
+      }
     } finally {
       setLoading(false);
     }
@@ -78,7 +88,8 @@ export const RoadmapProvider = ({ children }) => {
   };
   const fetchOrder = async (id: string) => {
     try {
-      const currentOrder = orders.find((item) => String(item.Id) === String(id)) ?? {};
+      const currentOrder =
+        orders.find((item) => String(item.Id) === String(id)) ?? {};
       setLoading(true);
       const response = await getOrderById(id);
       const client = await getClientById(response?.Cliente?.Codigo);
@@ -116,10 +127,11 @@ export const RoadmapProvider = ({ children }) => {
       paymentMethods,
       payments,
       setPayments,
+      blockedOrders,
       addPayment: handleSavePayment,
       fetchPayments,
     }),
-    [roadmap, orders, order, paymentMethods, payments]
+    [roadmap, orders, order, paymentMethods, payments, blockedOrders]
   );
   return (
     <RoadmapContext.Provider value={data}>{children}</RoadmapContext.Provider>
