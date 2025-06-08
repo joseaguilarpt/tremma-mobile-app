@@ -70,16 +70,7 @@ export default function HomeView() {
             },
           }}
         />
-        <Tab.Screen
-          name="Hojas"
-          component={Roadmaps}
-          options={{
-            tabBarLabel: "Hojas de Ruta",
-            tabBarIcon: ({ color, size }) => {
-              return <Icon name="list" size={size} color={color} />;
-            },
-          }}
-        />
+
         <Tab.Screen
           name="Cuenta"
           component={SettingsScreen}

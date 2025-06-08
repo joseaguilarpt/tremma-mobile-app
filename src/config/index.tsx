@@ -97,10 +97,10 @@ const roles = {
   ],
 };
 
-export const BASE_URL = 'https://arrowtremma.com'
+//export const BASE_URL = 'https://arrowtremma.com'
 
-//export const BASE_URL =
- // "https://tremma-app-desa-ada0dmf5bpfjdafx.eastus2-01.azurewebsites.net";
+export const BASE_URL =
+  "https://tremma-app-desa-ada0dmf5bpfjdafx.eastus2-01.azurewebsites.net";
 
 export const API_URL = `${BASE_URL}/api/api`;
 

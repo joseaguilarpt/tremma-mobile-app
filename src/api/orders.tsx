@@ -112,6 +112,43 @@ export const confirmOrderAssignment = async (payload: any) => {
   }
 };
 
+export const invalidateOrderAssignment = async (payload: any) => {
+  try {
+    await api.put(
+      `/entregas/anular_asignacion?hojaRutaId=${payload.Id}&motivo=${payload.motivo}`,
+      payload.orders
+    );
+    return true;
+  } catch (e) {
+    throw e;
+  }
+};
+
+export const rejectOrderAssignment = async (payload: any) => {
+  try {
+    await api.put(
+      `/entregas/rechazar_asignacion?hojaRutaId=${payload.Id}&motivo=${payload.motivo}`,
+      payload.orders
+    );
+    return true;
+  } catch (e) {
+    throw e;
+  }
+};
+
+export const startRoadmap = async (payload: any) => {
+  try {
+    await api.put(
+      `/entregas/iniciar_hojaruta/${payload.Id}`,
+      payload.orders
+    );
+    return true;
+  } catch (e) {
+    throw e;
+  }
+};
+
+
 export const putMoveOrdersInSameRoadmap = async (payload) => {
   try {
     await api.put(

@@ -1,36 +1,24 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Appbar, Text } from "react-native-paper";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
-import { useNotifications } from "@/context/notification";
-import { getRoadmapById } from "@/api/roadmap";
-import { useAuth } from "@/context/auth";
-import { useLoading } from "@/context/loading.utils";
-import { Roadmap as RoadmapType } from "@/types/Roadmap";
 import { formatMoney } from "@/utils/money";
+import { useRoadmap } from "@/context/roadmap";
 
-function Roadmap({ id }: { id: string }) {
+function Roadmap({
+  id,
+  onStartRoadmap,
+}: {
+  id: string;
+  onStartRoadmap: () => void;
+}) {
   const navigator = useNavigation();
-  const [roadmap, setRoadmap] = React.useState<Partial<RoadmapType>>({});
-  const { user } = useAuth();
-  const { showSnackbar } = useNotifications();
-  const { setLoading } = useLoading();
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await getRoadmapById(id);
-      setRoadmap(response);
-    } catch (error) {
-      showSnackbar(
-        "Error al carga la hoja de ruta, por favor intente nuevamente",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { roadmap } = useRoadmap();
 
+  const ordersCount = (roadmap?.Pedidos ?? []).filter(
+    (item) => !item.Bloqueado
+  ).length;
   const data = [
     {
       label: "Ruta",
@@ -42,7 +30,7 @@ function Roadmap({ id }: { id: string }) {
     },
     {
       label: "Total de Pedidos",
-      value: roadmap?.TotalPedidos,
+      value: ordersCount,
     },
     {
       label: "Total de Bultos",
@@ -61,13 +49,6 @@ function Roadmap({ id }: { id: string }) {
       value: roadmap?.TotalDevoluciones,
     },
   ];
-  const initialize = useCallback(() => {
-    if (user?.id) {
-      fetchData();
-    }
-  }, [user?.id]);
-
-  useFocusEffect(initialize);
 
   return (
     <ProtectedRoute>
@@ -86,15 +67,7 @@ function Roadmap({ id }: { id: string }) {
               </View>
             }
           />
-          <Appbar.Action
-            icon="send"
-            onPress={() => {
-              showSnackbar(
-                "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-                "error"
-              );
-            }}
-          />
+          <Appbar.Action icon="send" onPress={onStartRoadmap} />
         </Appbar.Header>
         <View style={styles.container}>
           <Text variant="titleMedium">Vehiculo Asignado:</Text>

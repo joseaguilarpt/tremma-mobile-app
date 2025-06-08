@@ -10,7 +10,7 @@ import {
 } from "react-native-paper";
 import { StyleSheet, useColorScheme } from "react-native";
 import { useConnectivity } from "./connection.utils";
-import * as BackgroundFetch from "expo-background-fetch";
+import * as BackgroundFetch from "expo-background-task";
 import { BACKGROUND_TASK_NAME } from "@/notifications/config";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -25,6 +25,7 @@ import {
 } from "@/constants/theme";
 import { navigationRef } from "@/utils/navigation";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { RoadmapProvider } from "./roadmap";
 
 const ConnectPush = () => {
   useEffect(() => {
@@ -85,18 +86,20 @@ function AppProviders({ children }: { children: ReactNode }) {
                 <AuthProvider>
                   <LoadingProvider>
                     <SnackbarProvider>
-                      {children}
-                      {!isConnected && (
-                        <Banner style={styles.banner} visible={true}>
-                          <Text
-                            variant="labelSmall"
-                            style={styles.bannerMessage}
-                          >
-                            Sin conexion a internet
-                          </Text>
-                        </Banner>
-                      )}
-                      <ConnectPush />
+                      <RoadmapProvider>
+                        {children}
+                        {!isConnected && (
+                          <Banner style={styles.banner} visible={true}>
+                            <Text
+                              variant="labelSmall"
+                              style={styles.bannerMessage}
+                            >
+                              Sin conexion a internet
+                            </Text>
+                          </Banner>
+                        )}
+                        <ConnectPush />
+                      </RoadmapProvider>
                     </SnackbarProvider>
                   </LoadingProvider>
                 </AuthProvider>

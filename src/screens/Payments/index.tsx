@@ -3,40 +3,39 @@ import { View, StyleSheet } from "react-native";
 import {
   Appbar,
   Badge,
-  Button,
   Icon,
   Text,
-  TextInput,
   TouchableRipple,
 } from "react-native-paper";
 import {
-  useFocusEffect,
   useNavigation,
-  useRoute,
 } from "@react-navigation/native";
+import uuid from "react-native-uuid";
+
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import OrderInvalidateSheet from "@/components/OrderInvalidate";
+import NewPaymentSheet from "@/components/NewPaymentSheet/NewPaymentSheet";
 import { Order } from "@/types/Roadmap";
+import { CreditPayments } from "./CreditPayments";
+import DisplayList from "@/components/DisplayList";
+import { CashPayments } from "./CashPayments";
+import RemovePaymentSheet from "@/components/RemovePaymentSheet/RemovePaymentSheet";
+
+enum PaymentType {
+  Credit = 1,
+  Cash = 2,
+}
 
 function OrderPayments({ order }: { order: Order }) {
-  const route = useRoute();
-  const params = route.params as { [key: string]: string | number };
-
-  const { showSnackbar } = useNotifications();
-  const [formState, setFormState] = React.useState({
-    Producto: "",
-    Observaciones: "",
-  });
-  const handleParams = useCallback(() => {}, [params]);
-
-  useFocusEffect(handleParams);
+  const [payments, setPayments] = useState([]);
+  const [selected, setSelected] = useState({});
   const navigator = useNavigation();
+  const { messages } = useNotifications();
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const { messages } = useNotifications();
   const openSheet = useCallback(() => {
     bottomSheetRef.current?.present();
   }, []);
@@ -45,31 +44,50 @@ function OrderPayments({ order }: { order: Order }) {
     bottomSheetRef.current?.dismiss();
   }, []);
 
-  const handleClick = () => {
-    openSheet();
-  };
+  const bottomSheetAddPaymentRef = useRef<BottomSheetModal>(null);
+  const openAddSheet = useCallback(() => {
+    bottomSheetAddPaymentRef.current?.present();
+  }, []);
 
-  const handleInputChange = (field: keyof typeof formState, value: string) => {
-    setFormState((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  const closeAddSheet = useCallback(() => {
+    bottomSheetAddPaymentRef.current?.dismiss();
+  }, []);
+
+  const bottomSheetRemoveRef = useRef<BottomSheetModal>(null);
+  const openRemoveSheet = useCallback(() => {
+    bottomSheetRemoveRef.current?.present();
+  }, []);
+
+  const closeRemoveSheet = useCallback(() => {
+    bottomSheetRemoveRef.current?.dismiss();
+  }, []);
 
   const data = [
     {
-      label: "Condición de pago",
+      label: "Número de Pedido",
       value: order?.Numero ?? "-",
     },
     {
-      label: "Monto de la factura",
-      value: order?.NombreCliente ?? "-",
+      label: "Condición de pago",
+      value: order?.CondicionPago?.Descripcion ?? "-",
     },
   ];
 
-  const handleSave = () => {
-    showSnackbar("Devolución actualizada exitosamente.", "success");
-    navigator.goBack();
+    const handleSavePayment = (values) => {
+    setPayments((prev) => [...prev, { Id: uuid.v4(), ...values }]);
+  };
+
+
+  const handleRemovePayment = () => {
+    closeRemoveSheet();
+    const filtered = payments.filter((item) => item.Id !== selected.Id);
+    setPayments(filtered);
+    setSelected({});
+  };
+
+  const handleSelectTableItem = (v) => {
+    setSelected(v);
+    openRemoveSheet();
   };
 
   return (
@@ -90,11 +108,11 @@ function OrderPayments({ order }: { order: Order }) {
             }
           />
           <Appbar.Action
-            onPress={handleSave}
+            onPress={openSheet}
             icon={({ size, color }) => (
               <TouchableRipple>
                 <View>
-                  <Icon source="send" size={24} />
+                  <Icon source="archive-off" size={24} />
                 </View>
               </TouchableRipple>
             )}
@@ -117,57 +135,37 @@ function OrderPayments({ order }: { order: Order }) {
         </Appbar.Header>
 
         <ScrollView style={styles.container}>
-          <Text>Trabajo en progreso...</Text>
-          <Text>Trabajo en progreso...</Text>
-          <Text>Trabajo en progreso...</Text>
-          <Text>Trabajo en progreso...</Text>
-
           <Text variant="titleMedium">Detalles:</Text>
-          <View style={styles.cards}>
-            {data.map((item, index) => (
-              <React.Fragment key={index}>
-                <View style={styles.card}>
-                  <Text variant="titleMedium">{item.label}:</Text>
-                </View>
-                <View style={styles.card}>
-                  <Text>{item.value ?? "-"}</Text>
-                </View>
-              </React.Fragment>
-            ))}
+          <DisplayList data={data} />
+          {order?.CondicionPago?.Id === PaymentType.Credit && (
+            <CreditPayments
+              payments={payments}
+            />
+          )}
+          {order?.CondicionPago?.Id === PaymentType.Cash && (
+            <CashPayments
+              payments={payments}
+              addPayment={openAddSheet}
+              onSelectTableItem={handleSelectTableItem}
+            />
+          )}
 
-            <View style={{ flex: 1, padding: 15, marginBottom: 20 }}>
-              <Text style={{ marginTop: 20 }} variant="titleMedium">
-                Observaciones:
-              </Text>
-
-              <TextInput
-                mode="outlined"
-                label="Observaciones"
-                value={formState.Observaciones}
-                multiline
-                numberOfLines={3}
-                style={styles.textArea}
-                onChangeText={(value) =>
-                  handleInputChange("Observaciones", value)
-                }
-              />
-            </View>
-          </View>
-          <View>
-            <Button
-              onPress={handleSave}
-              icon="send"
-              mode="contained"
-              style={{ marginTop: 20 }}
-            >
-              Guardar
-            </Button>
-          </View>
         </ScrollView>
         <OrderInvalidateSheet
           closeSheet={closeSheet}
           selectedOrder={order}
           bottomSheetRef={bottomSheetRef}
+        />
+        <RemovePaymentSheet
+          closeSheet={closeRemoveSheet}
+          payment={selected}
+          onRemovePayment={handleRemovePayment}
+          bottomSheetRef={bottomSheetRemoveRef}
+        />
+        <NewPaymentSheet
+          closeSheet={closeAddSheet}
+          onSave={handleSavePayment}
+          bottomSheetRef={bottomSheetAddPaymentRef}
         />
       </View>
     </ProtectedRoute>

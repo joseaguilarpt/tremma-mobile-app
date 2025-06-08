@@ -15,14 +15,11 @@ import { useNavigation } from "@react-navigation/native";
 import NavigationBar from "@/components/NavigationBar/NavigationBar";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
-import { getRoadmapsList } from "@/api/roadmap";
-import { useAuth } from "@/context/auth";
 import RoadmapCard from "@/components/RoadmapCard/RoadmapCard";
-import { dayCR } from "@/utils/dates";
 import { useLoading } from "@/context/loading.utils";
 import Spacer from "@/components/Spacer/Spacer";
-import { getCurrentRoadmap } from "@/api/orders";
 import { Roadmap } from "@/types/Roadmap";
+import { useRoadmap } from "@/context/roadmap";
 
 function Dashboard() {
   const theme = useTheme();
@@ -37,42 +34,21 @@ function Dashboard() {
     roadmaps: 0,
   });
 
-  const { user } = useAuth();
   const { showSnackbar } = useNotifications();
+  const { roadmap, orders } = useRoadmap();
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const currentData = await getCurrentRoadmap();
-      if (currentData) {
-        setCurrent(currentData);
-      }
-      const { Items = [], TotalCount = 0 } = await getRoadmapsList({
-        Conductor: user.Id,
-        PageSize: 1000,
-        MinDate: dayCR().startOf("D").format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        MaxDate: dayCR()
-          .startOf("D")
-          .add(1, "M")
-          .format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-      });
-      setRoadmaps(Items);
-      const totalOrders = (Items ?? []).reduce((acc, item) => {
-        if (item.TotalPedidos) {
-          acc += item.TotalPedidos;
-        }
-        return acc;
-      }, 0);
-      const totalReturns = (Items ?? []).reduce((acc, item) => {
-        if (item.TotalDevoluciones) {
-          acc += item.TotalDevoluciones;
-        }
-        return acc;
-      }, 0);
 
+      const totalOrders = roadmap?.TotalPedidos ?? 0;
+      const totalReturns = roadmap?.TotalDevoluciones ?? 0;
+
+      setCurrent(roadmap)
       setStatistics({
         orders: totalOrders,
         returns: totalReturns,
-        roadmaps: TotalCount,
+        roadmaps: 0,
       });
     } catch (error) {
       showSnackbar(
@@ -85,10 +61,10 @@ function Dashboard() {
   };
 
   const initialize = useCallback(() => {
-    if (user?.id) {
+    if (roadmap && orders.length > 0) {
       fetchData();
     }
-  }, [user?.id]);
+  }, [roadmap, orders]);
 
   useFocusEffect(initialize);
 
@@ -110,7 +86,6 @@ function Dashboard() {
                 style={[
                   styles.cardTopData,
                   {
-                    marginBottom: 20,
                     backgroundColor: "rgba(231, 87, 31, 0.8)",
                   },
                 ]}
@@ -129,7 +104,7 @@ function Dashboard() {
                     color={theme.colors.onPrimary}
                   />
                   <View style={{ paddingLeft: 20 }}>
-                    <Text variant="titleLarge">En Curso</Text>
+                    <Text variant="titleLarge">Hoja de Ruta en Curso</Text>
                     <Text
                       variant="bodyMedium"
                       style={{ marginBottom: 20, fontWeight: "bold" }}
@@ -143,12 +118,11 @@ function Dashboard() {
                     color="rgb(177, 139, 67)"
                     key={current.Id}
                     roadmap={current}
-                    isCurrent
                   />
                 </View>
               </Surface>
             )}
-            {statistics.roadmaps === 0 && (
+            {current === null && statistics.roadmaps === 0 && (
               <Surface style={styles.cardTop} elevation={4}>
                 <View>
                   <Icon source="bus" size={40} color={theme.colors.onPrimary} />
@@ -247,6 +221,15 @@ function Dashboard() {
                 </View>
               </Surface>
             </TouchableRipple>
+            {current?.Id && (
+              <Button
+                onPress={() =>
+                  navigator.navigate("CloseRoadmap", { id: current.Id, ...current })
+                }
+              >
+                Temporal: Cierre de Hoja de Ruta
+              </Button>
+            )}
             <Spacer size={20} />
           </View>
         </View>

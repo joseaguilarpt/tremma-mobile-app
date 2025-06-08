@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   CommonActions,
@@ -10,14 +10,12 @@ import { BottomNavigation, useTheme } from "react-native-paper";
 // @ts-ignore
 import Icon from "react-native-vector-icons/FontAwesome";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
-import { useNotifications } from "@/context/notification";
-import { getOrderById } from "@/api/orders";
 import { useLoading } from "@/context/loading.utils";
-import { useAuth } from "@/context/auth";
 import OrdersMap from "@/components/Map/Map";
 import OrderDetails from "../OrderDetails";
-import { getClientById } from "@/api/clients";
 import OrderPayments from "../Payments";
+import { useRoadmap } from "@/context/roadmap";
+import { useNotifications } from "@/context/notification";
 
 const Tab = createBottomTabNavigator();
 
@@ -25,45 +23,29 @@ export default function OrderDetailsScreen() {
   const theme = useTheme();
   const route = useRoute();
   const params = route.params as { [key: string]: string | number };
-
-  const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
-  const { user } = useAuth();
-
-  const [orders, setOrders] = React.useState([]);
   const [isOpenMap, setIsOpenMap] = React.useState(false);
-  const [order, setOrder] = React.useState(null);
 
-  const fetchData = async () => {
+  const { order, fetchOrder, orders, setOrders, setOrder } = useRoadmap();
+  const handleFetchOrder = async () => {
     try {
-      setLoading(true);
-      const response = await getOrderById(params?.Id);
-      const client = await getClientById(response?.Cliente?.Codigo);
-      setOrder({
-        ...params,
-        ...response,
-        Cliente: client,
-      });
-      if (response.Id) {
-        setOrders([{ ...params, ...response }]);
-      }
+      await fetchOrder(params.id);
     } catch (error) {
-      showSnackbar(
-        "Error al carga el Pedido, por favor intente nuevamente",
-        "error"
-      );
-    } finally {
-      setLoading(false);
+      showSnackbar("Error al cargar el pedido, intente nuevamente.", "error");
     }
   };
 
   const initialize = useCallback(() => {
-    if (user?.id) {
-      fetchData();
-    }
-  }, [user?.id]);
+    handleFetchOrder();
+  }, [params.id]);
 
   useFocusEffect(initialize);
+
+  useEffect(() => {
+    return () => {
+      setOrder({})
+    }
+  }, [])
 
   return (
     <ProtectedRoute>
@@ -140,7 +122,9 @@ export default function OrderDetailsScreen() {
               },
             }}
           >
-            {() => <OrderPayments id={params.id} orders={orders} order={order} />}
+            {() => (
+              <OrderPayments id={params.id} orders={orders} order={order} />
+            )}
           </Tab.Screen>
         </Tab.Navigator>
         <TouchableOpacity
@@ -153,7 +137,7 @@ export default function OrderDetailsScreen() {
           <Icon name="map" size={30} color="white" />
         </TouchableOpacity>
         <OrdersMap
-          orders={orders}
+          orders={[order]}
           isOpen={isOpenMap}
           closeModal={() => setIsOpenMap(false)}
         />
@@ -166,7 +150,7 @@ const styles = StyleSheet.create({
   floatingButton: {
     position: "absolute",
     alignSelf: "center",
-    bottom: 40,
+    bottom: 25,
     width: 70,
     height: 70,
     borderRadius: 35,

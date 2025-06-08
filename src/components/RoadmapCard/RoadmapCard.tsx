@@ -1,4 +1,5 @@
 import { dayCR } from "@/utils/dates";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, View } from "react-native";
 import { Surface, Text, TouchableRipple } from "react-native-paper";
@@ -6,13 +7,13 @@ import { Surface, Text, TouchableRipple } from "react-native-paper";
 const RoadmapCard = ({
   roadmap,
   color = "rgb(18, 86, 107)",
-  isCurrent = false,
 }) => {
-  const navigator = useNavigation();
+  const navigator = useNavigation<any>();
 
-  const handleNavigate = () => {
-    if (!isCurrent) {
-      navigator.navigate("Roadmap", { id: roadmap.Numero });
+  const handleNavigate = async () => {
+    const isActive = AsyncStorage.getItem("active-roadmap")
+    if (roadmap.Estado === "Asignado" && !isActive) {
+      navigator.navigate("Roadmap", { id: roadmap.Numero, ...roadmap });
     } else {
       navigator.navigate("OnGoingOrders", { id: roadmap.Numero });
     }

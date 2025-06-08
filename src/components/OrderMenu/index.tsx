@@ -18,23 +18,24 @@ import OrderNotLoadedSheet from "../OrderNotLoaded";
 import { confirmOrderAssignment } from "@/api/orders";
 import { useNotifications } from "@/context/notification";
 import { useLoading } from "@/context/loading.utils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRoadmap } from "@/context/roadmap";
 
 type OrderMenuProps = {
   closeSheet: () => void;
   selectedOrder: any;
-  roadmap: any;
   bottomSheetRef: React.RefObject<BottomSheetModal>;
 };
 
 export default function OrderSheet({
   closeSheet,
   selectedOrder,
-  roadmap,
   bottomSheetRef,
 }: OrderMenuProps) {
   const theme = useTheme();
   const { showSnackbar } = useNotifications();
   const { setLoading } = useLoading();
+  const { roadmap, refresh } = useRoadmap();
   const snapPoints = useMemo(() => ["40%"], []);
   const invalidateSheetRef = useRef<BottomSheetModal>(null);
   const notLoadedSheetRef = useRef<BottomSheetModal>(null);
@@ -55,25 +56,52 @@ export default function OrderSheet({
     notLoadedSheetRef.current?.dismiss();
   }, []);
 
+  const addLoadedId = async () => {
+    try {
+      const list = await AsyncStorage.getItem("loaded-orders");
+      let data: Record<string, string[]> = {};
+
+      if (list) {
+        data = JSON.parse(list);
+        if (Array.isArray(data[roadmap.Id])) {
+          if (!data[roadmap.Id].includes(selectedOrder.Id)) {
+            data[roadmap.Id].push(selectedOrder.Id);
+          }
+        } else {
+          data[roadmap.Id] = [selectedOrder.Id];
+        }
+      } else {
+        data[roadmap.Id] = [selectedOrder.Id];
+      }
+
+      await AsyncStorage.setItem("loaded-orders", JSON.stringify(data));
+    } catch (error) {
+      // Handle error if needed
+      console.error("Error saving loaded order:", error);
+    }
+  };
+
   const handleAcceptAssignment = async () => {
     try {
       closeSheet();
       setLoading(true);
+
       const payload = {
         Id: roadmap.Id,
         orders: [selectedOrder.Id],
       };
       await confirmOrderAssignment(payload);
+      await addLoadedId();
+      await refresh();
       showSnackbar("Pedido marcado como cargado exitosamente.", "success");
     } catch (error) {
-      console.log(error);
+      setLoading(false);
       showSnackbar(
         error?.response?.data?.errors?.Messages?.[0] ||
           "Error al Marcar como Cargado.",
         "error"
       );
     } finally {
-      setLoading(false);
     }
   };
 

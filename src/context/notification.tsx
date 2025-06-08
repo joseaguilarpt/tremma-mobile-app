@@ -113,6 +113,7 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
           styles.snackbar,
           snackbarSeverity === "error" && styles.snackbarError,
           snackbarSeverity === "success" && styles.snackbarSuccess,
+          { zIndex: 10000 },
         ]}
         action={{
           labelStyle: { color: "white" },

@@ -2,7 +2,6 @@ import React, { useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   CommonActions,
-  useFocusEffect,
   useRoute,
 } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -13,11 +12,11 @@ import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import OnGoingOrders from "../OnGoingOrders";
 import OnGoingRoadmap from "../OnGoingRoadmap";
-import { getCurrentRoadmap, putMoveOrdersInSameRoadmap } from "@/api/orders";
+import { putMoveOrdersInSameRoadmap } from "@/api/orders";
 import { useLoading } from "@/context/loading.utils";
-import { useAuth } from "@/context/auth";
 import OrdersMap from "@/components/Map/Map";
 import { Order } from "@/types/Roadmap";
+import { useRoadmap } from "@/context/roadmap";
 
 const Tab = createBottomTabNavigator();
 
@@ -28,40 +27,9 @@ export default function OnGoingScreen() {
 
   const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
-  const { user } = useAuth();
-
-  const [orders, setOrders] = React.useState([]);
-  const [roadmap, setRoadmap] = React.useState(null);
+  const { orders, roadmap, refresh, setOrders } = useRoadmap()
   const [isOpenMap, setIsOpenMap] = React.useState(false);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await getCurrentRoadmap();
-      setRoadmap(response);
-      const ordersWithReturns = [];
-      (response?.Pedidos ?? []).forEach((item) => {
-        const newOrder = { ...item, key: item.Id };
-        ordersWithReturns.push(newOrder);
-      });
-      setOrders(ordersWithReturns);
-    } catch (error) {
-      showSnackbar(
-        "Error al carga la hoja de ruta, por favor intente nuevamente",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const initialize = useCallback(() => {
-    if (user?.id) {
-      fetchData();
-    }
-  }, [user?.id]);
-
-  useFocusEffect(initialize);
 
   const handleReorderData = async ({
     data,
@@ -84,7 +52,7 @@ export default function OnGoingScreen() {
         pedidoId: current.Id,
         secuencia: Secuencia ?? 1,
       });
-      await fetchData();
+      await refresh();
       showSnackbar(`Los pedidos fueron movidos exitosamente.`, "success");
     } catch (error) {
       showSnackbar("Error al mover los pedidos, intentelo nuevamente", "error");
@@ -203,7 +171,7 @@ const styles = StyleSheet.create({
   floatingButton: {
     position: "absolute",
     alignSelf: "center",
-    bottom: 40,
+    bottom: 25,
     width: 70,
     height: 70,
     borderRadius: 35,

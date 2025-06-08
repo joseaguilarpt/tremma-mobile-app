@@ -1,23 +1,28 @@
-import * as BackgroundFetch from "expo-background-fetch";
+import * as BackgroundFetch from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
-//import * as Notifications from "expo-notifications";
+import * as Notifications from "expo-notifications";
 import { getCommunications } from "@/api/communication";
 import { getAuthData, isTokenExpired, refreshToken } from "@/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import dayjs from "dayjs";
 import { sendNotification } from "@/utils/notifications";
 import { dayCR } from "@/utils/dates";
 
 export const BACKGROUND_TASK_NAME = "background-fetch-task";
 
 // Configurar el manejador de notificaciones
-// Notifications.setNotificationHandler({
-//   handleNotification: async () => ({
-//     shouldShowAlert: true,
-//     shouldPlaySound: false,
-//     shouldSetBadge: false,
-//   }),
-// });
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldShowInForeground: true,
+    shouldShowInBackground: true,
+    shouldShowInApp: true,
+  }),
+});
 
 // Definir la tarea en segundo plano
 TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
@@ -31,7 +36,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     // Comprobar si hay un ID de usuario válido
     if (!data?.user?.id) {
       console.log("No hay user.Id disponible. Saltando la llamada a la API.");
-      return BackgroundFetch.BackgroundFetchResult.NoData;
+      return BackgroundFetch.BackgroundTaskResult.Failed;
     }
 
     const response = await getCommunications({ userId: data?.user?.id });
@@ -47,13 +52,13 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
       );
     }
     sendNotification({
-      title: "Tremma",
+      title: "Arrow",
       body: `Tiene mensajes nuevos.`,
     });
     await AsyncStorage.setItem("last_messages_check", new Date().toISOString());
-    return BackgroundFetch.BackgroundFetchResult.NewData;
+    return BackgroundFetch.BackgroundTaskResult.Success;
   } catch (error) {
     console.error("Error en la tarea de background:", error);
-    return BackgroundFetch.BackgroundFetchResult.Failed;
+    return BackgroundFetch.BackgroundTaskResult.Failed;
   }
 });

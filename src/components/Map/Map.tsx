@@ -1,11 +1,41 @@
 import React, { useEffect, useMemo } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
-import { IconButton, Modal } from "react-native-paper";
+import { Button, IconButton, Modal } from "react-native-paper";
 import * as Location from "expo-location";
 import { ListItem } from "../ListItem/ListItem";
 import { Order } from "@/types/Roadmap";
 import { useNotifications } from "@/context/notification";
+
+import { Linking, Platform } from "react-native";
+
+const openNavigation = async (
+  latitude: number,
+  longitude: number,
+  label?: string,
+  prefer: "google" | "waze" = "google"
+) => {
+  const googleMapsURL = `google.navigation:q=${latitude},${longitude}`;
+
+  const wazeURL = `waze://?ll=${latitude},${longitude}&navigate=yes`;
+
+  const fallbackGoogleURL = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+
+  const openURL = async (url: string, fallbackUrl: string) => {
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      Linking.openURL(url);
+    } else {
+      Linking.openURL(fallbackUrl);
+    }
+  };
+
+  if (prefer === "waze") {
+    await openURL(wazeURL, fallbackGoogleURL);
+  } else {
+    await openURL(googleMapsURL!, fallbackGoogleURL);
+  }
+};
 
 type Coordinates = {
   latitude: number;
@@ -185,10 +215,10 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
             strokeColor="#000" // color de la línea
             strokeWidth={3} // grosor
           />
-          {points.map((marker) => (
+          {points.map((marker, index) => (
             <Marker
               onPress={() => setSelectedMarker(marker)}
-              key={marker.id}
+              key={index ?? marker.id ?? marker.key}
               coordinate={marker.coordinate}
             >
               <View style={styles.customMarker}>
@@ -225,6 +255,43 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
         <View style={styles.botonContainer}>
           <IconButton icon="close" size={30} onPress={closeModal} />
         </View>
+        {selectedMarker && (
+          <View style={styles.botonNavegarContainer}>
+            <Button
+              onPress={() =>
+                openNavigation(
+                  selectedMarker?.coordinate?.latitude,
+                  selectedMarker?.coordinate?.longitude,
+                  `Navegar a ${selectedMarker.label}`,
+                  "waze"
+                )
+              }
+              style={{ backgroundColor: "#31C6F7" }}
+              textColor="black"
+              mode="contained"
+              icon={"waze"}
+              disabled={selectedMarker.label === "H"}
+            >
+              Waze
+            </Button>
+            <Button
+              disabled={selectedMarker.label === "H"}
+              onPress={() =>
+                openNavigation(
+                  selectedMarker?.coordinate?.latitude,
+                  selectedMarker?.coordinate?.longitude,
+                  `Navegar a ${selectedMarker.label}`,
+                  "google"
+                )
+              }
+              style={{ backgroundColor: "#30A54E" }}
+              mode="contained"
+              icon={"google-maps"}
+            >
+              Google
+            </Button>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -250,6 +317,16 @@ const styles = StyleSheet.create({
     right: 20,
     borderRadius: 600,
     backgroundColor: "#2b2b2bd6",
+  },
+  botonNavegarContainer: {
+    position: "absolute",
+    bottom: 15,
+    right: 10,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    justifyContent: "flex-end",
   },
   modal: {
     flex: 1,

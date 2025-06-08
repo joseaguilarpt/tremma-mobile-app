@@ -10,6 +10,7 @@ import RoadmapView from "@/screens/RoadmapScreen";
 import OnGoingScreen from "@/screens/OnGoingScreen";
 import OrderDetailsScreen from "@/screens/OrderDetailsScreen";
 import ReturnDetailsScreen from "@/screens/ReturnDetailsScreen";
+import CloseRoadmapScreen from "@/screens/CloseRoadmapScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -41,7 +42,11 @@ export default function Router() {
         component={ReturnDetailsScreen}
         options={{ headerShown: false }}
       />
-
+      <Stack.Screen
+        name="CloseRoadmap"
+        component={CloseRoadmapScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="Login"
         component={LoginScreen}

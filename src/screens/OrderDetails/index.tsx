@@ -55,6 +55,11 @@ function OrderDetails({ id, order }: { id: string; order: Order }) {
     openSheet();
   };
 
+  const handleInvalidate = () => {
+    navigator.goBack();
+    closeSheet();
+  };
+
   const data = [
     {
       label: "Número de pedido",
@@ -62,7 +67,7 @@ function OrderDetails({ id, order }: { id: string; order: Order }) {
     },
     {
       label: "Nombre del cliente",
-      value: order?.NombreCliente ?? "-",
+      value: order?.Cliente?.Descripcion ?? "-",
     },
     {
       label: "Cantidad de bultos",
@@ -219,7 +224,7 @@ function OrderDetails({ id, order }: { id: string; order: Order }) {
           )}
         </ScrollView>
         <OrderInvalidateSheet
-          closeSheet={closeSheet}
+          closeSheet={handleInvalidate}
           selectedOrder={order}
           bottomSheetRef={bottomSheetRef}
         />

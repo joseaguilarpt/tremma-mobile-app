@@ -20,7 +20,9 @@ export const AuthContext = createContext<any>(null);
 export function AuthProvider({
   children,
 }) {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<any | null>(async () => {
+    return await getAuthData().then((data) => data?.user || null);
+  });
   const [loaded, setLoaded] = useState(false);
   const [roleOptions, setRoleOptions] = useState<any[]>([]);
   const [imageSrc, setImageSrc] = React.useState<string | null>(null);

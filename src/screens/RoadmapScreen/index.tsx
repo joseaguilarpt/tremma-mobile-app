@@ -1,6 +1,10 @@
 import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { CommonActions, useRoute } from "@react-navigation/native";
+import {
+  CommonActions,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { BottomNavigation, useTheme } from "react-native-paper";
 // @ts-ignore
@@ -9,6 +13,10 @@ import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import Roadmap from "../Roadmap";
 import Orders from "../Orders";
 import { useNotifications } from "@/context/notification";
+import { useRoadmap } from "@/context/roadmap";
+import { startRoadmap } from "@/api/orders";
+import { useLoading } from "@/context/loading.utils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Tab = createBottomTabNavigator();
 
@@ -17,8 +25,44 @@ const OrdersTab = (props) => <Orders {...props} />;
 export default function RoadmapView() {
   const theme = useTheme();
   const route = useRoute();
+  const navigate = useNavigation();
   const params = route.params as { id: string };
   const { showSnackbar } = useNotifications();
+  const { setLoading } = useLoading();
+  const { orders, roadmap } = useRoadmap();
+
+    const storeActiveRoadmap = async () => {
+    try {
+      await AsyncStorage.setItem("active-roadmap", roadmap.Id);
+    } catch (error) {
+      // Handle error if needed
+      console.error("Error loading active order:", error);
+    }
+  };
+
+  const handleStartRoadmap = async () => {
+    const hasMissing = (orders ?? []).some((item) => item.Estado !== "Cargado");
+    try {
+      if (hasMissing) {
+        showSnackbar(
+          "Para continuar, asegúrate de que todos los pedidos estén marcados.",
+          "error"
+        );
+        return;
+      }
+      setLoading(true);
+      await startRoadmap({ Id: roadmap.Id });
+      await storeActiveRoadmap()
+      navigate.navigate("OnGoingOrders", { id: roadmap.Id });
+    } catch (error) {
+      showSnackbar(
+        "Error al inciar la Hoja de Ruta, por favor intente nuevamente.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <ProtectedRoute>
       <View style={{ flex: 1 }}>
@@ -77,7 +121,9 @@ export default function RoadmapView() {
               },
             }}
           >
-            {() => <Roadmap id={params.id} />}
+            {() => (
+              <Roadmap id={params.id} onStartRoadmap={handleStartRoadmap} />
+            )}
           </Tab.Screen>
           <Tab.Screen
             name="DetallePedidos"
@@ -88,23 +134,20 @@ export default function RoadmapView() {
               },
             }}
           >
-            {() => <OrdersTab id={params.id} />}
+            {() => (
+              <OrdersTab id={params.id} onStartRoadmap={handleStartRoadmap} />
+            )}
           </Tab.Screen>
         </Tab.Navigator>
 
         <TouchableOpacity
-          onPress={() => {
-            showSnackbar(
-              "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-              "error"
-            );
-          }}
+          onPress={handleStartRoadmap}
           style={[
             styles.floatingButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Icon name="plus" size={30} color="white" />
+          <Icon name="send" size={30} color="white" />
         </TouchableOpacity>
       </View>
     </ProtectedRoute>
@@ -115,7 +158,7 @@ const styles = StyleSheet.create({
   floatingButton: {
     position: "absolute",
     alignSelf: "center",
-    bottom: 40,
+    bottom: 25,
     width: 70,
     height: 70,
     borderRadius: 35,

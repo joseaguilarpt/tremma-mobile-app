@@ -1,12 +1,18 @@
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
+  TouchableWithoutFeedback,
 } from "@gorhom/bottom-sheet";
-import { StyleSheet, View } from "react-native";
+import { Keyboard, StyleSheet, View } from "react-native";
+import { useRoadmap } from "@/context/roadmap";
+import { useKeyboardListener } from "@/hooks/useKeyboardListener";
+import { useNotifications } from "@/context/notification";
+import { invalidateOrderAssignment } from "@/api/orders";
+import { useLoading } from "@/context/loading.utils";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -20,64 +26,117 @@ export default function OrderInvalidateSheet({
   bottomSheetRef,
 }: OrderMenuProps) {
   const theme = useTheme();
-  const snapPoints = useMemo(() => ["40%"], []);
+  const { refresh, roadmap } = useRoadmap();
+  const { showSnackbar } = useNotifications();
+  const { setLoading, isLoading } = useLoading();
+  const [error, setError] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const { keyboardVisible } = useKeyboardListener();
+
+  const snapPoints = useMemo(
+    () => [keyboardVisible ? "75%" : "40%"],
+    [keyboardVisible]
+  );
+
+  const handleClose = () => {
+    setError(false);
+    setMotivo("");
+    closeSheet();
+  };
+
+  const handleSubmit = async () => {
+    try {
+      if (!motivo) {
+        setError(true);
+        showSnackbar("Observaciones es requerido", "error");
+        return;
+      }
+      setLoading(true);
+      await invalidateOrderAssignment({
+        motivo,
+        Id: roadmap.Id,
+        orders: [selectedOrder.Id],
+      });
+      await refresh();
+      handleClose();
+      showSnackbar("Solicitud de anulación enviada exitosamente.", "success");
+    } catch (error) {
+      setLoading(false);
+      showSnackbar(
+        "Error al enviar la solicitud de anulación, intente nuevamente.",
+        "error"
+      );
+    }
+  };
+
+  const handleChange = (v) => {
+    setError(false);
+    setMotivo(v);
+  };
 
   return (
-    <BottomSheetModal
-      ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      backgroundStyle={{ backgroundColor: "rgba(46, 64, 82, 1)" }}
-      style={{ color: theme.colors.onSurface }}
-      handleIndicatorStyle={{ backgroundColor: "white" }}
-      enablePanDownToClose
-      enableDismissOnClose
-      onDismiss={closeSheet}
-      backdropComponent={(props) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          pressBehavior="close"
-        />
-      )}
-    >
-      <BottomSheetView style={styles.contentContainer}>
-        <View style={styles.drawer}>
-          <Text
-            variant="titleLarge"
-            style={{ color: theme.colors.onSurface, padding: 16 }}
-          >
-            Anular Pedido: {selectedOrder?.Numero}
-          </Text>
-          <Text style={{ margin: 16 }}>¿Desea anular el Pedido?</Text>
-          <TextInput
-            label="Observaciones"
-            mode="outlined"
-            multiline
-            numberOfLines={5}
-            style={{ margin: 16, marginTop: 0, height: 100 }}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        backgroundStyle={{ backgroundColor: "rgba(46, 64, 82, 1)" }}
+        style={{ color: theme.colors.onSurface }}
+        handleIndicatorStyle={{ backgroundColor: "white" }}
+        enablePanDownToClose
+        enableDismissOnClose
+        onDismiss={handleClose}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+            pressBehavior="close"
           />
-        </View>
-        <View style={styles.card}>
-          <Button
-            icon="close"
-            mode="outlined"
-            textColor="white"
-            onPress={closeSheet}
-          >
-            Cancelar
-          </Button>
-          <Button
-            icon="send"
-            style={{ marginLeft: 16 }}
-            mode="contained"
-            onPress={closeSheet}
-          >
-            Enviar
-          </Button>
-        </View>
-      </BottomSheetView>
-    </BottomSheetModal>
+        )}
+      >
+        <BottomSheetView style={styles.contentContainer}>
+          <View style={styles.drawer}>
+            <Text
+              variant="titleLarge"
+              style={{ color: theme.colors.onSurface, padding: 16 }}
+            >
+              Anular Pedido: {selectedOrder?.Numero}
+            </Text>
+            <Text style={{ margin: 16 }}>¿Desea anular el Pedido?</Text>
+            <TextInput
+              label="Observaciones"
+              mode="outlined"
+              multiline
+              value={motivo}
+              onChangeText={handleChange}
+              numberOfLines={5}
+              style={{ margin: 16, marginTop: 0, height: 100 }}
+              error={error}
+            />
+          </View>
+          <View style={styles.card}>
+            <Button
+              icon="close"
+              mode="outlined"
+              disabled={isLoading}
+              textColor="white"
+              onPress={handleClose}
+            >
+              Cancelar
+            </Button>
+            <Button
+              icon="send"
+              disabled={isLoading}
+              style={{ marginLeft: 16 }}
+              mode="contained"
+              onPress={handleSubmit}
+            >
+              Enviar
+            </Button>
+          </View>
+        </BottomSheetView>
+      </BottomSheetModal>
+    </TouchableWithoutFeedback>
   );
 }
 

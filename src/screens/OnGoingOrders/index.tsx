@@ -42,11 +42,11 @@ function OnGoingOrders({
 
   const handleClick = (order, isReturn = false) => {
     if (isReturn) {
-      navigator.navigate("ReturnDetails", { ...order });
+      navigator.navigate("ReturnDetails", { id: order.Id, ...order });
       return;
     }
     setSelectedOrder(order);
-    navigator.navigate("OrderDetails", { ...order });
+    navigator.navigate("OrderDetails", { id: order.Id, ...order });
   };
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<any>) => {
@@ -117,7 +117,7 @@ function OnGoingOrders({
             title={
               <View>
                 <Text variant="titleMedium">Hoja de Ruta en Curso:</Text>
-                <Text>{id}</Text>
+                <Text>{roadmap.Numero}</Text>
               </View>
             }
           />
