@@ -6,6 +6,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Order, Roadmap } from "@/types/Roadmap";
 import { getClientById } from "@/api/clients";
 import { getPaymentMethodList } from "@/api/paymentMethods";
+import uuid from "react-native-uuid";
+import { getPaymentListByOrderId } from "@/api/payments";
 
 const RoadmapContext = React.createContext(null);
 
@@ -14,9 +16,14 @@ export const RoadmapProvider = ({ children }) => {
   const [roadmap, setRoadmap] = React.useState<Roadmap | any>({});
   const [order, setOrder] = React.useState<Order | any>({});
   const [paymentMethods, setPaymentMethods] = React.useState([]);
+  const [payments, setPayments] = React.useState([]);
 
   const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
+
+  const handleSavePayment = (values) => {
+    setPayments((prev) => [...prev, { Id: uuid.v4(), ...values }]);
+  };
 
   const fetchData = async () => {
     try {
@@ -63,9 +70,15 @@ export const RoadmapProvider = ({ children }) => {
     } catch (error) {}
   };
 
-  const fetchOrder = async (id: number) => {
+  const fetchPayments = async (id: string) => {
     try {
-      const currentOrder = orders.find((item) => item.Id === id) ?? {};
+      const response = await getPaymentListByOrderId(id);
+      setPayments(response);
+    } catch (error) {}
+  };
+  const fetchOrder = async (id: string) => {
+    try {
+      const currentOrder = orders.find((item) => String(item.Id) === String(id)) ?? {};
       setLoading(true);
       const response = await getOrderById(id);
       const client = await getClientById(response?.Cliente?.Codigo);
@@ -74,6 +87,7 @@ export const RoadmapProvider = ({ children }) => {
         ...response,
         Cliente: client,
       });
+      fetchPayments(id);
     } catch (error) {
       showSnackbar(
         "Error al carga el Pedido, por favor intente nuevamente",
@@ -100,8 +114,12 @@ export const RoadmapProvider = ({ children }) => {
       setOrder,
       fetchOrder,
       paymentMethods,
+      payments,
+      setPayments,
+      addPayment: handleSavePayment,
+      fetchPayments,
     }),
-    [roadmap, orders, order, paymentMethods]
+    [roadmap, orders, order, paymentMethods, payments]
   );
   return (
     <RoadmapContext.Provider value={data}>{children}</RoadmapContext.Provider>

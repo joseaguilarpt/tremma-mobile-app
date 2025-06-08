@@ -10,19 +10,16 @@ import {
 import {
   useNavigation,
 } from "@react-navigation/native";
-import uuid from "react-native-uuid";
 
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import OrderInvalidateSheet from "@/components/OrderInvalidate";
-import NewPaymentSheet from "@/components/NewPaymentSheet/NewPaymentSheet";
 import { Order } from "@/types/Roadmap";
 import { CreditPayments } from "./CreditPayments";
 import DisplayList from "@/components/DisplayList";
 import { CashPayments } from "./CashPayments";
-import RemovePaymentSheet from "@/components/RemovePaymentSheet/RemovePaymentSheet";
 
 enum PaymentType {
   Credit = 1,
@@ -30,8 +27,6 @@ enum PaymentType {
 }
 
 function OrderPayments({ order }: { order: Order }) {
-  const [payments, setPayments] = useState([]);
-  const [selected, setSelected] = useState({});
   const navigator = useNavigation();
   const { messages } = useNotifications();
 
@@ -42,24 +37,6 @@ function OrderPayments({ order }: { order: Order }) {
 
   const closeSheet = useCallback(() => {
     bottomSheetRef.current?.dismiss();
-  }, []);
-
-  const bottomSheetAddPaymentRef = useRef<BottomSheetModal>(null);
-  const openAddSheet = useCallback(() => {
-    bottomSheetAddPaymentRef.current?.present();
-  }, []);
-
-  const closeAddSheet = useCallback(() => {
-    bottomSheetAddPaymentRef.current?.dismiss();
-  }, []);
-
-  const bottomSheetRemoveRef = useRef<BottomSheetModal>(null);
-  const openRemoveSheet = useCallback(() => {
-    bottomSheetRemoveRef.current?.present();
-  }, []);
-
-  const closeRemoveSheet = useCallback(() => {
-    bottomSheetRemoveRef.current?.dismiss();
   }, []);
 
   const data = [
@@ -73,22 +50,6 @@ function OrderPayments({ order }: { order: Order }) {
     },
   ];
 
-    const handleSavePayment = (values) => {
-    setPayments((prev) => [...prev, { Id: uuid.v4(), ...values }]);
-  };
-
-
-  const handleRemovePayment = () => {
-    closeRemoveSheet();
-    const filtered = payments.filter((item) => item.Id !== selected.Id);
-    setPayments(filtered);
-    setSelected({});
-  };
-
-  const handleSelectTableItem = (v) => {
-    setSelected(v);
-    openRemoveSheet();
-  };
 
   return (
     <ProtectedRoute>
@@ -138,17 +99,10 @@ function OrderPayments({ order }: { order: Order }) {
           <Text variant="titleMedium">Detalles:</Text>
           <DisplayList data={data} />
           {order?.CondicionPago?.Id === PaymentType.Credit && (
-            <CreditPayments
-              payments={payments}
-            />
+            <CreditPayments />
           )}
           {order?.CondicionPago?.Id === PaymentType.Cash && (
-            <CashPayments
-              payments={payments}
-              addPayment={openAddSheet}
-              onSelectTableItem={handleSelectTableItem}
-            />
-          )}
+            <CashPayments /> )}
 
         </ScrollView>
         <OrderInvalidateSheet
@@ -156,17 +110,7 @@ function OrderPayments({ order }: { order: Order }) {
           selectedOrder={order}
           bottomSheetRef={bottomSheetRef}
         />
-        <RemovePaymentSheet
-          closeSheet={closeRemoveSheet}
-          payment={selected}
-          onRemovePayment={handleRemovePayment}
-          bottomSheetRef={bottomSheetRemoveRef}
-        />
-        <NewPaymentSheet
-          closeSheet={closeAddSheet}
-          onSave={handleSavePayment}
-          bottomSheetRef={bottomSheetAddPaymentRef}
-        />
+
       </View>
     </ProtectedRoute>
   );

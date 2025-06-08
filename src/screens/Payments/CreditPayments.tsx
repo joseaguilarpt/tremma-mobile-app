@@ -23,8 +23,8 @@ const columns = [
   { key: "email", title: "Referencia" },
 ];
 
-export function CreditPayments({ payments }) {
-  const { order, refresh } = useRoadmap();
+export function CreditPayments() {
+  const { order, refresh, payments } = useRoadmap();
   const { setLoading, isLoading } = useLoading();
   const [error, setError] = useState(false);
   const { user } = useAuth();

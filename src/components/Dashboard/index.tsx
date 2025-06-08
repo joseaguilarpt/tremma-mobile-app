@@ -61,7 +61,7 @@ function Dashboard() {
   };
 
   const initialize = useCallback(() => {
-    if (roadmap && orders.length > 0) {
+    if (roadmap) {
       fetchData();
     }
   }, [roadmap, orders]);

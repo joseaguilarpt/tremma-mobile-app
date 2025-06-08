@@ -1,18 +1,25 @@
 import api from "./api";
 import * as FileSystem from "expo-file-system";
 
-export const postFile = async (params, containerName = "userdata") => {
+export const postFile = async (archivo, containerName = "userdata") => {
   const formData = new FormData();
-  formData.append("file", params);
+
+  // Asegúrate de que el archivo tenga los campos requeridos
+  formData.append("file", {
+    uri: archivo.uri,
+    name: archivo.name || `upload.${archivo.type?.split("/")[1] || "jpg"}`,
+    type: archivo.type || "image/jpeg",
+  });
+
   try {
     const response = await api.post(
       `blobfiles/upload?containerName=${containerName}`,
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data", // Required for form data
+          "Content-Type": "multipart/form-data",
         },
-      },
+      }
     );
     return response.data;
   } catch (e) {
@@ -27,7 +34,7 @@ export const fetchImage = async (fileName, containerName = "userdata") => {
       `blobfiles/download/${fileName}?containerName=${containerName}`,
       {
         responseType: "arraybuffer", // Fetch binary data as ArrayBuffer
-      },
+      }
     );
 
     // Convert ArrayBuffer to base64

@@ -9,6 +9,11 @@ import {
 import { StyleSheet, View } from "react-native";
 import { useNotifications } from "@/context/notification";
 import { useRoadmap } from "@/context/roadmap";
+import { useKeyboardListener } from "@/hooks/useKeyboardListener";
+import { postFile } from "@/api/files";
+import { useAuth } from "@/context/auth";
+import { useLoading } from "@/context/loading.utils";
+import { postPayment, putPaymentById } from "@/api/payments";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -21,8 +26,15 @@ export default function NewPaymentSheet({
   onSave,
 }: OrderMenuProps) {
   const theme = useTheme();
-  const { paymentMethods } = useRoadmap()
-  const snapPoints = useMemo(() => ["70%"], []);
+  const { keyboardVisible } = useKeyboardListener();
+  const { user } = useAuth();
+  const { setLoading, isLoading } = useLoading();
+  const { paymentMethods, order, payments, refresh, fetchPayments } =
+    useRoadmap();
+  const snapPoints = useMemo(
+    () => [keyboardVisible ? "85%" : "70%"],
+    [keyboardVisible]
+  );
   const [open, setOpen] = useState(false);
   const [formState, setFormState] = useState({});
   const [errors, setErrors] = useState({});
@@ -58,21 +70,64 @@ export default function NewPaymentSheet({
     setErrors({});
   };
 
-  const handleSave = () => {
-    let err = {};
-    if (!formState.MetodoDePago) {
-      err.MetodoDePago = "MetodoDePago";
+  const handleSave = async () => {
+    try {
+      let err = {};
+      if (!formState.MetodoDePago) {
+        err.MetodoDePago = "MetodoDePago";
+      }
+      if (!formState.MontoCancelado) {
+        err.MontoCancelado = "MontoCancelado";
+      }
+      if (err.MontoCancelado || err.MetodoDePago) {
+        setErrors(err);
+        showSnackbar("Por favor complete los campos requeridos.", "error");
+        return;
+      }
+
+      setLoading(true);
+      let imageId = "";
+      if (formState.Comprobante) {
+        imageId = await postFile(formState.Comprobante, "comprobantesdata");
+      }
+      const currentPayment = payments.find(
+        (item) => item.pedidoId === order.Id
+      );
+
+      const payload = {
+        ...(currentPayment ?? {}),
+        pedidoId: order?.Id,
+        monto: formState?.MontoCancelado,
+        comprobante: formState?.Referencia,
+        usuario: user.username,
+      };
+
+      if (imageId) {
+        payload.imagen = imageId;
+      }
+
+      if (order?.CondicionPago) {
+        payload.metodoPago = {
+          id: order?.CondicionPago?.Id,
+          descripcion: order?.CondicionPago?.Descripcion,
+        };
+      }
+      let api = postPayment;
+      if (currentPayment) {
+        api = putPaymentById;
+      }
+
+      await api(payload);
+      showSnackbar("Pago actualizado exitosamente.", "success");
+      await refresh();
+      await fetchPayments(order?.Id)
+      clearForm();
+    } catch (error) {
+      console.log(error)
+      showSnackbar("Error al guardar pago, intente nuevamente.", "error");
+    } finally {
+      setLoading(false);
     }
-    if (!formState.MontoCancelado) {
-      err.MontoCancelado = "MontoCancelado";
-    }
-    if (err.MontoCancelado || err.MetodoDePago) {
-      setErrors(err);
-      showSnackbar("Por favor complete los campos requeridos.", "error");
-      return;
-    }
-    clearForm();
-    onSave(formState);
   };
 
   return (
@@ -200,6 +255,7 @@ export default function NewPaymentSheet({
             style={{ marginLeft: 16 }}
             mode="contained"
             onPress={handleSave}
+            disabled={isLoading}
           >
             Guardar
           </Button>

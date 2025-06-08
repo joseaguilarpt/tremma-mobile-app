@@ -42,6 +42,16 @@ export const putPaymentById = async (payload) => {
   }
 };
 
+
+export const deletePaymentById = async (payload) => {
+  try {
+    await api.delete(`/pagos/${payload.id}`);
+    return true;
+  } catch (e) {
+    throw e;
+  }
+};
+
 export const postPayment = async (payload) => {
   try {
     await api.post(`/pagos`, payload);

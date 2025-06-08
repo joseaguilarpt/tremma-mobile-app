@@ -7,6 +7,10 @@ import {
 } from "@gorhom/bottom-sheet";
 import { StyleSheet, View } from "react-native";
 import { formatMoney } from "@/utils/money";
+import { deletePaymentById } from "@/api/payments";
+import { useNotifications } from "@/context/notification";
+import { useLoading } from "@/context/loading.utils";
+import { useRoadmap } from "@/context/roadmap";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -17,10 +21,29 @@ export default function RemovePaymentSheet({
   closeSheet,
   bottomSheetRef,
   payment,
-  onRemovePayment,
 }: OrderMenuProps) {
   const theme = useTheme();
   const snapPoints = useMemo(() => ["30%"], []);
+  const { showSnackbar } = useNotifications();
+  const { setLoading, isLoading } = useLoading();
+  const { refresh, fetchPayments } = useRoadmap();
+
+  const handleRemove = async () => {
+    try {
+      setLoading(true);
+
+      await deletePaymentById({ id: payment.Id });
+      showSnackbar("Pago eliminado exitosamente.", "success");
+      await refresh();
+      await fetchPayments(payment.PedidoId);
+      closeSheet();
+    } catch (error) {
+      console.log(error, "error");
+      showSnackbar("Error al eliminar pago, intente nuevamente.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <BottomSheetModal
@@ -51,8 +74,8 @@ export default function RemovePaymentSheet({
           </Text>
           <Text style={{ margin: 16 }}>
             ¿Desea remover el pago por{" "}
-            {payment?.MontoCancelado
-              ? formatMoney(payment?.MontoCancelado)
+            {payment?.Monto
+              ? formatMoney(payment?.Monto)
               : "-"}{" "}
             de la lista?
           </Text>
@@ -70,7 +93,8 @@ export default function RemovePaymentSheet({
               icon="send"
               style={{ marginLeft: 16 }}
               mode="contained"
-              onPress={onRemovePayment}
+              onPress={handleRemove}
+              disabled={isLoading}
             >
               Remover
             </Button>

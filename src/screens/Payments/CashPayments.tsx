@@ -1,13 +1,14 @@
-import { postPayment, putPaymentById } from "@/api/payments";
 import DisplayList from "@/components/DisplayList";
+import NewPaymentSheet from "@/components/NewPaymentSheet/NewPaymentSheet";
+import RemovePaymentSheet from "@/components/RemovePaymentSheet/RemovePaymentSheet";
 import { ReusableTable } from "@/components/Table";
-import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
 import { useRoadmap } from "@/context/roadmap";
 import { formatMoney } from "@/utils/money";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Keyboard,
   StyleSheet,
@@ -21,46 +22,40 @@ import { Button, Text, TextInput } from "react-native-paper";
 const columns = [
   { key: "MetodoDePago", title: "Método" },
   { key: "Monto", title: "Monto" },
-  { key: "Referencia", title: "Referencia" },
+  { key: "Comprobante", title: "Referencia" },
 ];
 
-export function CashPayments({
-  payments = [],
-  addPayment,
-  onSelectTableItem,
-}: {
-  payments: any[];
-  addPayment: () => void;
-  onSelectTableItem: (o: string) => void;
-}) {
-  const { order, roadmap, refresh, paymentMethods } = useRoadmap();
+export function CashPayments() {
+  const { order, roadmap, refresh, payments } =
+    useRoadmap();
   const { setLoading, isLoading } = useLoading();
   const [error, setError] = useState(false);
-  const { user } = useAuth();
+  const [selected, setSelected] = useState({});
+
   const [comments, setComments] = useState("");
   const navigator = useNavigation();
-  const { showSnackbar } = useNotifications();
 
   const montoCancelado = payments.reduce((acc, curr) => {
-    if (curr.MontoCancelado) {
-      acc += Number(curr.MontoCancelado) ?? 0;
+    if (curr.Monto) {
+      acc += Number(curr.Monto) ?? 0;
     }
     return acc;
   }, 0);
 
+  const { showSnackbar } = useNotifications();
+
   const montoPendiente = order?.Monto - montoCancelado;
 
   const tableData = payments.map((item) => {
-    const pm = paymentMethods.find((v) => item.MetodoDePago === v.Id);
     return {
       ...item,
-      Monto: formatMoney(item.MontoCancelado),
-      MetodoDePago: pm?.Descripcion ?? "-",
-      Referencia: item.Referencia ?? "-",
+      Monto: formatMoney(item.Monto),
+      MetodoDePago: item?.MetodoPago?.Descripcion ?? "-",
+      Comprobante: item.Comprobante ?? "-",
     };
   });
 
-    const data = [
+  const data = [
     {
       label: "Monto de la factura",
       value: order?.Monto ? formatMoney(order?.Monto) : "-",
@@ -71,43 +66,21 @@ export function CashPayments({
     },
   ];
 
-
   const handleSave = async () => {
-    const currentPayment = payments.find((item) => item.pedidoId === order.Id);
+    if (montoPendiente !== 0) {
+      showSnackbar("El monto pendiente debe ser igual a 0.", "error");
+      return;
+    }
+    if (!comments) {
+      showSnackbar("El campo Observaciones es requerido.", "error");
+      setError(true);
+      return;
+    }
     try {
-      if (!comments) {
-        showSnackbar("Observaciones es requerido.", "error");
-        setError(true);
-        return;
-      }
-
-      setLoading(true);
-      const payload = {
-        ...(currentPayment ?? {}),
-        pedidoId: order?.Id,
-        monto: order?.Monto,
-        observaciones: comments,
-        usuario: user.username,
-      };
-
-      if (order?.CondicionPago) {
-        payload.metodoPago = {
-          id: order?.CondicionPago?.Id,
-          descripcion: order?.CondicionPago?.Descripcion,
-        };
-      }
-
-      let api = postPayment;
-      if (currentPayment) {
-        api = putPaymentById;
-      }
-
-      await api(payload);
-      showSnackbar("Pago actualizado exitosamente.", "success");
       await refresh();
       navigator.reset({
         index: 0,
-        routes: [{ name: "OnGoingOrders", params: { id: roadmap.id } }],
+        routes: [{ name: "CloseRoadmap", params: { id: roadmap.id } }],
       });
     } catch (error) {
       console.error(error);
@@ -116,7 +89,29 @@ export function CashPayments({
     }
   };
 
-  console.log(payments, "payments");
+  const bottomSheetAddPaymentRef = useRef<BottomSheetModal>(null);
+  const openAddSheet = useCallback(() => {
+    bottomSheetAddPaymentRef.current?.present();
+  }, []);
+
+  const closeAddSheet = useCallback(() => {
+    bottomSheetAddPaymentRef.current?.dismiss();
+  }, []);
+
+  const bottomSheetRemoveRef = useRef<BottomSheetModal>(null);
+  const openRemoveSheet = useCallback(() => {
+    bottomSheetRemoveRef.current?.present();
+  }, []);
+
+  const closeRemoveSheet = useCallback(() => {
+    bottomSheetRemoveRef.current?.dismiss();
+  }, []);
+
+  const handleSelectTableItem = (v) => {
+    setSelected(v);
+    openRemoveSheet();
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAwareScrollView
@@ -130,8 +125,8 @@ export function CashPayments({
         <View style={styles.table}>
           <ReusableTable
             columns={columns}
-            data={payments}
-            onSelect={onSelectTableItem}
+            data={tableData}
+            onSelect={handleSelectTableItem}
             keyExtractor={(item) => item.Id ?? item.Monto}
           />
         </View>
@@ -144,7 +139,7 @@ export function CashPayments({
           }}
         >
           <Button
-            onPress={addPayment}
+            onPress={openAddSheet}
             mode="contained"
             style={{ width: 200 }}
             disabled={payments.length >= 4}
@@ -177,6 +172,15 @@ export function CashPayments({
           >
             Guardar
           </Button>
+          <NewPaymentSheet
+            closeSheet={closeAddSheet}
+            bottomSheetRef={bottomSheetAddPaymentRef}
+          />
+          <RemovePaymentSheet
+            closeSheet={closeRemoveSheet}
+            payment={selected}
+            bottomSheetRef={bottomSheetRemoveRef}
+          />
         </View>
       </KeyboardAwareScrollView>
     </TouchableWithoutFeedback>
