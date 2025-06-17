@@ -51,6 +51,15 @@ export function CreditPayments() {
         return;
       }
 
+      if (comments.length > 100) {
+        showSnackbar(
+          "El campo Observaciones no puede exceder los 100 caracteres.",
+          "error"
+        );
+        setError(true);
+        return;
+      }
+
       if (order?.Devoluciones?.length > 0) {
         showSnackbar(
           "No se puede registrar el pago porque existen devoluciones pendientes asociadas a este pedido. Por favor, finalice las devoluciones antes de continuar.",

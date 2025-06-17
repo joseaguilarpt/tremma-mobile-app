@@ -76,6 +76,11 @@ export function CashPayments() {
       setError(true);
       return;
     }
+    if (comments.length > 100) {
+      showSnackbar("El campo Observaciones no puede exceder los 100 caracteres.", "error");
+      setError(true);
+      return;
+    }
     try {
       await refresh();
       navigator.reset({
