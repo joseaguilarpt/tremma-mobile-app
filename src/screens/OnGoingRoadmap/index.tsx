@@ -1,14 +1,18 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { Appbar, Badge, Icon, Text, TouchableRipple } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { Roadmap as RoadmapType } from "@/types/Roadmap";
 import { useNotifications } from "@/context/notification";
+import { useLoading } from "@/context/loading.utils";
+import { useRoadmap } from "@/context/roadmap";
 
-function OnGoingRoadmap({ id, roadmap }: { id: string, roadmap: RoadmapType }) {
+function OnGoingRoadmap({ id, roadmap }: { id: string; roadmap: RoadmapType }) {
   const navigator = useNavigation();
   const { messages } = useNotifications();
+  const { isLoading } = useLoading();
+  const { fetchData } = useRoadmap();
   const data = [
     {
       label: "Ruta",
@@ -26,17 +30,19 @@ function OnGoingRoadmap({ id, roadmap }: { id: string, roadmap: RoadmapType }) {
       label: "Devoluciones pendientes",
       value: roadmap?.TotalDevoluciones,
     },
-        {
+    {
       label: "Bultos de devoluciones",
       value: roadmap?.TotalDevoluciones,
     },
-    
-
   ];
 
   return (
     <ProtectedRoute>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={fetchData} />
+        }
+      >
         <Appbar.Header>
           <Appbar.BackAction
             onPress={() => {
@@ -52,20 +58,20 @@ function OnGoingRoadmap({ id, roadmap }: { id: string, roadmap: RoadmapType }) {
             }
           />
           <Appbar.Action
-        onPress={() => navigator.navigate("Messages")}
-        icon={({ size, color }) => (
-          <TouchableRipple>
-            <View>
-              <Icon source="message" size={24} />
-              {(messages ?? []).length > 0 && (
-                <Badge style={{ position: "absolute", top: -5, right: -5 }}>
-                  {messages.length}
-                </Badge>
-              )}
-            </View>
-          </TouchableRipple>
-        )}
-      />
+            onPress={() => navigator.navigate("Messages")}
+            icon={({ size, color }) => (
+              <TouchableRipple>
+                <View>
+                  <Icon source="message" size={24} />
+                  {(messages ?? []).length > 0 && (
+                    <Badge style={{ position: "absolute", top: -5, right: -5 }}>
+                      {messages.length}
+                    </Badge>
+                  )}
+                </View>
+              </TouchableRipple>
+            )}
+          />
         </Appbar.Header>
         <View style={styles.container}>
           <Text variant="titleMedium">Vehiculo Asignado:</Text>

@@ -56,7 +56,6 @@ function OrderDetails({ id, order }: { id: string; order: Order }) {
   };
 
   const handleInvalidate = () => {
-    navigator.goBack();
     closeSheet();
   };
 

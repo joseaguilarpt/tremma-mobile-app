@@ -1,6 +1,49 @@
 import { View } from "react-native";
 import { Button, Drawer, useTheme } from "react-native-paper";
-import { Calendar } from "react-native-calendars";
+import { Calendar, LocaleConfig } from "react-native-calendars";
+
+LocaleConfig.locales["es"] = {
+    monthNames: [
+        "Enero",
+        "Febrero",
+        "Marzo",           
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+    ],
+    monthNamesShort: [
+        "Ene",
+        "Feb",
+        "Mar",
+        "Abr",
+        "May",
+        "Jun",  
+        "Jul",
+        "Ago",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dic",
+    ],
+    dayNames: [
+        "Domingo",
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",  
+        "Viernes",
+        "Sábado",
+    ],
+    dayNamesShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    today: "Hoy",
+};
+LocaleConfig.defaultLocale = "es";
 
 import React from "react";
 
@@ -83,6 +126,10 @@ export default function DatesDrawer({
                     onDayPress={onDayPress}
                     markedDates={markedDates}
                     markingType={"period"}
+                    monthFormat="MMM yyyy"
+                    hideExtraDays={true}
+                    hideDayNames
+                    enableSwipeMonths={true}
                     theme={{
                         backgroundColor: theme.colors.background,
                         calendarBackground: theme.colors.background,

@@ -24,7 +24,7 @@ const columns = [
 ];
 
 export function CreditPayments() {
-  const { order, refresh, payments } = useRoadmap();
+  const { order, refresh, payments, roadmap } = useRoadmap();
   const { setLoading, isLoading } = useLoading();
   const [error, setError] = useState(false);
   const { user } = useAuth();
@@ -51,6 +51,13 @@ export function CreditPayments() {
         return;
       }
 
+      if (order?.Devoluciones?.length > 0) {
+        showSnackbar(
+          "No se puede registrar el pago porque existen devoluciones pendientes asociadas a este pedido. Por favor, finalice las devoluciones antes de continuar.",
+          "error"
+        );
+        return;
+      }
       setLoading(true);
       const payload = {
         ...(currentPayment ?? {}),
@@ -62,8 +69,8 @@ export function CreditPayments() {
 
       if (order?.CondicionPago) {
         payload.metodoPago = {
-          id: order?.CondicionPago?.Id,
-          descripcion: order?.CondicionPago?.Descripcion,
+          id: 10,
+          descripcion: "Otros Métodos",
         };
       }
 

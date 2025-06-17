@@ -1,7 +1,9 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   CommonActions,
+  useFocusEffect,
+  useNavigation,
   useRoute,
 } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -24,12 +26,21 @@ export default function OnGoingScreen() {
   const theme = useTheme();
   const route = useRoute();
   const params = route.params as { id: string };
-
+  const navigator = useNavigation<any>();
   const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
-  const { orders, roadmap, refresh, setOrders } = useRoadmap()
+  const { orders, roadmap, refresh, setOrders } = useRoadmap();
   const [isOpenMap, setIsOpenMap] = React.useState(false);
 
+  const handleCheckOrders = useCallback(() => {
+    if (orders.length === 0) {
+      navigator.navigate("CloseRoadmap", {
+        id: roadmap?.Id,
+      });
+    }
+  }, []);
+
+  useFocusEffect(handleCheckOrders);
 
   const handleReorderData = async ({
     data,
@@ -148,15 +159,17 @@ export default function OnGoingScreen() {
             )}
           </Tab.Screen>
         </Tab.Navigator>
-        <TouchableOpacity
-          onPress={() => setIsOpenMap(true)}
-          style={[
-            styles.floatingButton,
-            { backgroundColor: theme.colors.primary },
-          ]}
-        >
-          <Icon name="map" size={30} color="white" />
-        </TouchableOpacity>
+        <View style={{ position: "relative" }}>
+          <TouchableOpacity
+            onPress={() => setIsOpenMap(true)}
+            style={[
+              styles.floatingButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
+          >
+            <Icon name="map" size={30} color="white" />
+          </TouchableOpacity>
+        </View>
         <OrdersMap
           orders={orders}
           isOpen={isOpenMap}

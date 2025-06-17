@@ -80,7 +80,7 @@ export function CashPayments() {
       await refresh();
       navigator.reset({
         index: 0,
-        routes: [{ name: "CloseRoadmap", params: { id: roadmap.id } }],
+        routes: [{ name: "OnGoingOrders", params: { id: roadmap.id } }],
       });
     } catch (error) {
       console.error(error);

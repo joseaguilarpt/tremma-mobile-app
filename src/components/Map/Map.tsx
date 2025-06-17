@@ -123,7 +123,7 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
   const { showSnackbar } = useNotifications();
   const points = useMemo(() => {
     const orderPoints = ((orders ?? []) as Order[]).map((item) => ({
-      id: item.Id,
+      id: item.Numero,
       title: `${item.CodigoCliente} - ${item.NombreCliente}`,
       description: item.Direccion,
       time: item.Horario,
@@ -140,8 +140,8 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
           };
       return [
         {
-          id: "user-location",
-          title: "Mi Ubicación",
+          id: "Mi Ubicación",
+          title: "",
           description: "Ubicación actual",
           coordinate: coord,
           label: "H",

@@ -19,12 +19,15 @@ import { useNotifications } from "@/context/notification";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import OrderInvalidateSheet from "@/components/OrderInvalidate";
+import { closeOrderReturn } from "@/api/orderReturns";
+import { useRoadmap } from "@/context/roadmap";
 
 function ReturnDetailsScreen() {
   const route = useRoute();
   const params = route.params as { [key: string]: string | number };
   const [order, setOrder] = useState(null);
 
+  const { refresh, roadmap } = useRoadmap();
   const { showSnackbar } = useNotifications();
   const [formState, setFormState] = React.useState({
     Producto: "",
@@ -35,8 +38,8 @@ function ReturnDetailsScreen() {
       setOrder(params);
       setFormState((prev) => ({
         ...prev,
-        Producto: String(params.Bultos) ?? "-",
-        Observaciones: String(params?.Observaciones) ?? "-",
+        Producto: params.Bultos ? String(params.Bultos) : "",
+        Observaciones: "",
       }));
     }
   }, [params]);
@@ -76,9 +79,35 @@ function ReturnDetailsScreen() {
     },
   ];
 
-  const handleSave = () => {
-    showSnackbar("Devolución actualizada exitosamente.", "success");
-    navigator.goBack();
+  const handleSave = async () => {
+    try {
+      if (!formState.Observaciones) {
+        showSnackbar("Por favor, ingrese las observaciones.", "error");
+        return;
+      }
+      if (formState.Observaciones.length > 100) {
+        showSnackbar(
+          "Las observaciones no pueden exceder los 100 caracteres.",
+          "error"
+        );
+        return;
+      }
+      const payload = {
+        id: order?.Id,
+        descripcion: formState.Observaciones,
+      };
+
+      await closeOrderReturn(payload);
+      await refresh();
+      showSnackbar("Devolución actualizada exitosamente.", "success");
+
+      navigator.navigate("OnGoingOrders", {
+        id: roadmap.Id,
+      });
+    } catch (error) {
+      console.log(error, "error");
+      showSnackbar("Error al actualizar la devolución.", "error");
+    }
   };
 
   return (
@@ -145,10 +174,9 @@ function ReturnDetailsScreen() {
               <TextInput
                 mode="outlined"
                 label="Productos"
+                disabled
                 value={formState.Producto}
-                multiline
-                numberOfLines={3}
-                style={styles.textArea}
+                style={{ marginTop: 10 }}
                 onChangeText={(value) => handleInputChange("Producto", value)}
               />
               <Text style={{ marginTop: 20 }} variant="titleMedium">

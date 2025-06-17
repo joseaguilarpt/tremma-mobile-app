@@ -10,7 +10,7 @@ import {
 } from "react-native-paper";
 import { StyleSheet, useColorScheme } from "react-native";
 import { useConnectivity } from "./connection.utils";
-import * as BackgroundFetch from "expo-background-task";
+import * as BackgroundTask from "expo-background-task";
 import { BACKGROUND_TASK_NAME } from "@/notifications/config";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -24,25 +24,36 @@ import {
   navigationDarkTheme,
 } from "@/constants/theme";
 import { navigationRef } from "@/utils/navigation";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 import { RoadmapProvider } from "./roadmap";
+import * as TaskManager from 'expo-task-manager';
+import * as Notifications from 'expo-notifications';
 
 const ConnectPush = () => {
   useEffect(() => {
-    const registerTask = async () => {
-      try {
-        await BackgroundFetch.registerTaskAsync(BACKGROUND_TASK_NAME, {
-          minimumInterval: 60 * 30, // Ejecutar cada 1 hora
-          stopOnTerminate: false, // Continuar después de cerrar la app (solo Android)
-          startOnBoot: true, // Iniciar al reiniciar el dispositivo (solo Android)
-        });
-        console.log("Tarea registrada correctamente.");
-      } catch (error) {
-        //console.error("Error al registrar la tarea:", error);
-      }
-    };
-    registerTask();
+    registerBackgroundTask();
+    askNotificationPermission();
   }, []);
+
+  async function askNotificationPermission() {
+    const { status } = await Notifications.requestPermissionsAsync();
+    console.log("Notification permission:", status);
+  }
+
+  async function registerBackgroundTask() {
+    try {
+      const isRegistered = await TaskManager.isTaskRegisteredAsync(
+        BACKGROUND_TASK_NAME
+      );
+      if (!isRegistered) {
+        await BackgroundTask.registerTaskAsync(BACKGROUND_TASK_NAME, {
+          minimumInterval: 15 * 60, // 15 min mínimo
+        });
+        console.log("✅ Background task registered");
+      }
+    } catch (err) {
+      console.error("Error registering background task:", err);
+    }
+  }
   return null;
 };
 

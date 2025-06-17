@@ -5,7 +5,6 @@ import { getCommunications } from "@/api/communication";
 import { getAuthData, isTokenExpired, refreshToken } from "@/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sendNotification } from "@/utils/notifications";
-import { dayCR } from "@/utils/dates";
 
 export const BACKGROUND_TASK_NAME = "background-fetch-task";
 
@@ -15,7 +14,6 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
-
     shouldShowBanner: true,
     shouldShowList: true,
     shouldShowInForeground: true,
@@ -45,16 +43,13 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
       Fecha: item.Fecha,
     }));
 
-    const lastCheck = await AsyncStorage.getItem("last_messages_check");
-    if (lastCheck) {
-      messagesList = messagesList.filter((item) =>
-        dayCR(item.Fecha).isAfter(dayCR(lastCheck))
-      );
+    if ((messagesList ?? [])?.length > 0) {
+      sendNotification({
+        title: "Arrow",
+        body: `Tiene mensajes nuevos.`,
+      });
     }
-    sendNotification({
-      title: "Arrow",
-      body: `Tiene mensajes nuevos.`,
-    });
+
     await AsyncStorage.setItem("last_messages_check", new Date().toISOString());
     return BackgroundFetch.BackgroundTaskResult.Success;
   } catch (error) {

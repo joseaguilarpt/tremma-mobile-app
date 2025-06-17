@@ -4,11 +4,11 @@ import { decodeMenuItems } from "./dashboard";
 const encodeParams = (params: Record<string, any>): string => {
   return Object.entries(params)
     .filter(
-      ([_, value]) => value !== undefined && value !== null && value !== "",
+      ([_, value]) => value !== undefined && value !== null && value !== ""
     ) // Filtrar valores nulos o vacíos
     .map(
       ([key, value]) =>
-        `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
+        `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
     )
     .join("&");
 };
@@ -42,7 +42,6 @@ export const putPaymentById = async (payload) => {
   }
 };
 
-
 export const deletePaymentById = async (payload) => {
   try {
     await api.delete(`/pagos/${payload.id}`);
@@ -56,6 +55,17 @@ export const postPayment = async (payload) => {
   try {
     await api.post(`/pagos`, payload);
     return true;
+  } catch (e) {
+    throw e;
+  }
+};
+
+export const getTotalPaymentByRoadmap = async (payload) => {
+  try {
+    const response = await api.get(
+      `/pagos/saldo-por-metodopago?hojaRutaId=${payload.hojaRutaId}&metodoPagoId=${payload.metodoPagoId}`
+    );
+    return response.data;
   } catch (e) {
     throw e;
   }

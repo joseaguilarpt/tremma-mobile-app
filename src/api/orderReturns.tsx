@@ -21,3 +21,17 @@ export const getReturnsList = async (payload) => {
     throw e;
   }
 };
+
+
+export const closeOrderReturn = async (payload) => {
+  try {
+    const response = await api.put(`/devoluciones/cerrar?${encodeParams(payload)}`);
+
+    return response.data;
+  } catch (e) {
+    throw e;
+  }
+};
+
+
+

@@ -85,6 +85,14 @@ export default function NewPaymentSheet({
         return;
       }
 
+      if (order?.Devoluciones?.length > 0) {
+        showSnackbar(
+          "No se puede registrar el pago porque existen devoluciones pendientes asociadas a este pedido. Por favor, finalice las devoluciones antes de continuar.",
+          "error"
+        );
+        return;
+      }
+
       setLoading(true);
       let imageId = "";
       if (formState.Comprobante) {
@@ -106,10 +114,10 @@ export default function NewPaymentSheet({
         payload.imagen = imageId;
       }
 
-      if (order?.CondicionPago) {
+      if (currentMethod) {
         payload.metodoPago = {
-          id: order?.CondicionPago?.Id,
-          descripcion: order?.CondicionPago?.Descripcion,
+          id: currentMethod?.Id,
+          descripcion: currentMethod?.Descripcion,
         };
       }
       let api = postPayment;
@@ -120,10 +128,10 @@ export default function NewPaymentSheet({
       await api(payload);
       showSnackbar("Pago actualizado exitosamente.", "success");
       await refresh();
-      await fetchPayments(order?.Id)
+      await fetchPayments(order?.Id);
       clearForm();
     } catch (error) {
-      console.log(error)
+      console.log(error);
       showSnackbar("Error al guardar pago, intente nuevamente.", "error");
     } finally {
       setLoading(false);

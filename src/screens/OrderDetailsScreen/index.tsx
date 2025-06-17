@@ -43,9 +43,9 @@ export default function OrderDetailsScreen() {
 
   useEffect(() => {
     return () => {
-      setOrder({})
-    }
-  }, [])
+      setOrder({});
+    };
+  }, []);
 
   return (
     <ProtectedRoute>
@@ -127,15 +127,17 @@ export default function OrderDetailsScreen() {
             )}
           </Tab.Screen>
         </Tab.Navigator>
-        <TouchableOpacity
-          onPress={() => setIsOpenMap(true)}
-          style={[
-            styles.floatingButton,
-            { backgroundColor: theme.colors.primary },
-          ]}
-        >
-          <Icon name="map" size={30} color="white" />
-        </TouchableOpacity>
+        <View style={{ position: "relative" }}>
+          <TouchableOpacity
+            onPress={() => setIsOpenMap(true)}
+            style={[
+              styles.floatingButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
+          >
+            <Icon name="map" size={30} color="white" />
+          </TouchableOpacity>
+        </View>
         <OrdersMap
           orders={[order]}
           isOpen={isOpenMap}

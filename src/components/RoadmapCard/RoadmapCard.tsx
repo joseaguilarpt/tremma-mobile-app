@@ -5,22 +5,23 @@ import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, View } from "react-native";
 import { Surface, Text, TouchableRipple } from "react-native-paper";
 
-const RoadmapCard = ({
-  roadmap,
-  color = "rgb(18, 86, 107)",
-}) => {
+const RoadmapCard = ({ roadmap, color = "rgb(18, 86, 107)" }) => {
   const navigator = useNavigation<any>();
-  const { orders } =useRoadmap();
-  const handleNavigate = async () => {
-    const isActive = AsyncStorage.getItem("active-roadmap");
-    if (roadmap.Estado === "Asignado" && !isActive) {
-      navigator.navigate("Roadmap", { id: roadmap.Numero, ...roadmap });
-    } else if (isActive && orders.length > 0) {
-      navigator.navigate("OnGoingOrders", { id: roadmap.Numero });
-    }
-    else {
-      navigator.navigate("CloseRoadmap", { id: roadmap.Numero });
+  const { orders } = useRoadmap();
 
+  const handleNavigate = async () => {
+    const activeRoadmap = await AsyncStorage.getItem("active-roadmap");
+    if (String(roadmap.Id) !== String(activeRoadmap)) {
+      await AsyncStorage.removeItem("active-roadmap");
+      navigator.navigate("Roadmap", { id: roadmap.Numero, ...roadmap });
+    } else if (
+      activeRoadmap &&
+      String(roadmap.Id) === String(activeRoadmap) &&
+      orders.length > 0
+    ) {
+      navigator.navigate("OnGoingOrders", { id: roadmap.Numero });
+    } else {
+      navigator.navigate("CloseRoadmap", { id: roadmap.Numero });
     }
   };
   return (

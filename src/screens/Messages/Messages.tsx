@@ -24,6 +24,8 @@ import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { dayCR } from "@/utils/dates";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/types/Routes";
+import { RefreshControl } from "react-native-gesture-handler";
+import { useLoading } from "@/context/loading.utils";
 
 dayjs.extend(isBetween);
 
@@ -52,6 +54,7 @@ export default function Messages() {
   const navigator =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { messages, getMessages } = useNotifications();
+  const { setLoading, isLoading } = useLoading();
   const [datesDrawerVisible, setDatesDrawerVisible] = useState(false);
   const translateY = React.useRef(new Animated.Value(300)).current;
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
@@ -185,9 +188,24 @@ export default function Messages() {
     return true;
   });
 
+  const refreshMessages = async () => {
+    try {
+      setLoading(true);
+      await getMessages();
+    } catch (error) {
+      console.error("Error refreshing messages:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={refreshMessages} />
+        }
+      >
         <Appbar.Header>
           <Appbar.BackAction
             onPress={() => {
@@ -247,7 +265,8 @@ export default function Messages() {
                     });
                   }}
                 >
-                  {selectedRange.startDate} - {selectedRange.endDate}
+                  {dayCR(selectedRange.startDate).format("DD-MM-YYYY")} -{" "}
+                  {dayCR(selectedRange.endDate).format("DD-MM-YYYY")}
                 </Chip>
               )}
               {filter && (

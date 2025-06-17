@@ -1,5 +1,11 @@
 import React, { useCallback } from "react";
-import { View, StyleSheet, Image, ScrollView } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Image,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
 import {
   Text,
   useTheme,
@@ -25,7 +31,7 @@ function Dashboard() {
   const theme = useTheme();
   const navigator =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { setLoading } = useLoading();
+  const { setLoading, isLoading } = useLoading();
   const [current, setCurrent] = React.useState<Roadmap | null>(null);
   const [roadmaps, setRoadmaps] = React.useState<Roadmap[]>([]);
   const [statistics, setStatistics] = React.useState({
@@ -34,27 +40,22 @@ function Dashboard() {
     roadmaps: 0,
   });
 
-  const { showSnackbar } = useNotifications();
-  const { roadmap, orders } = useRoadmap();
+  const { roadmap, orders, refresh } = useRoadmap();
 
   const fetchData = async () => {
     setLoading(true);
     try {
-
-      const totalOrders = roadmap?.TotalPedidos ?? 0;
+      const totalOrders = roadmap?.Pedidos?.length ?? 0;
       const totalReturns = roadmap?.TotalDevoluciones ?? 0;
 
-      setCurrent(roadmap)
+      setCurrent(roadmap);
       setStatistics({
         orders: totalOrders,
         returns: totalReturns,
         roadmaps: 0,
       });
     } catch (error) {
-      showSnackbar(
-        "Error al cargar las hojas de ruta, por favor intente nuevamente",
-        "error"
-      );
+
     } finally {
       setLoading(false);
     }
@@ -66,11 +67,27 @@ function Dashboard() {
     }
   }, [roadmap, orders]);
 
+  const handleRefresh = async () => {
+    try {
+      setLoading(true)
+      await refresh();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
+    finally {
+      setLoading(false);
+    }
+  }
+
   useFocusEffect(initialize);
 
   return (
     <ProtectedRoute>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
+        }
+      >
         <NavigationBar />
         <View style={styles.container}>
           <Text variant="titleLarge">Bienvenido a Arrow</Text>
@@ -221,7 +238,7 @@ function Dashboard() {
                 </View>
               </Surface>
             </TouchableRipple>
-            
+
             <Spacer size={20} />
           </View>
         </View>

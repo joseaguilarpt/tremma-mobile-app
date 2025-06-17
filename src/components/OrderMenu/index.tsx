@@ -133,76 +133,98 @@ export default function OrderSheet({
             >
               Pedido: {selectedOrder?.Numero}
             </Text>
-            <TouchableRipple
-              onPress={handleAcceptAssignment}
-              rippleColor="rgb(67, 170, 177)"
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 16,
-              }}
-            >
-              <>
-                <Icon source="check" size={26} color={theme.colors.onSurface} />
+            {selectedOrder?.Estado === "Cargado" && (
+              <View style={styles.container}>
                 <Text
                   variant="bodyLarge"
-                  style={{ color: theme.colors.onSurface, paddingLeft: 16 }}
+                  style={{ color: theme.colors.onSurface, padding: 16 }}
                 >
-                  Marcar como Cargado
+                  Este pedido ya ha sido marcado como Cargado.
                 </Text>
-              </>
-            </TouchableRipple>
-            <Divider style={styles.divider} />
-            <TouchableRipple
-              onPress={() => {
-                openNotLoadedSheet();
-                closeSheet();
-              }}
-              rippleColor="rgb(67, 170, 177)"
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 16,
-              }}
-            >
-              <>
-                <Icon source="close" size={26} color={theme.colors.onSurface} />
-                <Text
-                  variant="bodyLarge"
-                  style={{ color: theme.colors.onSurface, paddingLeft: 16 }}
+              </View>
+            )}
+            {selectedOrder?.Estado !== "Cargado" && (
+              <View>
+                <TouchableRipple
+                  onPress={handleAcceptAssignment}
+                  rippleColor="rgb(67, 170, 177)"
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    padding: 16,
+                  }}
                 >
-                  Marcar como No Cargado
-                </Text>
-              </>
-            </TouchableRipple>
-            <Divider style={styles.divider} />
+                  <>
+                    <Icon
+                      source="check"
+                      size={26}
+                      color={theme.colors.onSurface}
+                    />
+                    <Text
+                      variant="bodyLarge"
+                      style={{ color: theme.colors.onSurface, paddingLeft: 16 }}
+                    >
+                      Marcar como Cargado
+                    </Text>
+                  </>
+                </TouchableRipple>
+                <Divider style={styles.divider} />
+                <TouchableRipple
+                  onPress={() => {
+                    openNotLoadedSheet();
+                    closeSheet();
+                  }}
+                  rippleColor="rgb(67, 170, 177)"
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    padding: 16,
+                  }}
+                >
+                  <>
+                    <Icon
+                      source="close"
+                      size={26}
+                      color={theme.colors.onSurface}
+                    />
+                    <Text
+                      variant="bodyLarge"
+                      style={{ color: theme.colors.onSurface, paddingLeft: 16 }}
+                    >
+                      Marcar como No Cargado
+                    </Text>
+                  </>
+                </TouchableRipple>
+                <Divider style={styles.divider} />
 
-            <TouchableRipple
-              onPress={() => {
-                openInvalidateSheet();
-                closeSheet();
-              }}
-              rippleColor="rgb(67, 170, 177)"
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 16,
-              }}
-            >
-              <>
-                <Icon
-                  source="cancel"
-                  size={26}
-                  color={theme.colors.onSurface}
-                />
-                <Text
-                  variant="bodyLarge"
-                  style={{ color: theme.colors.onSurface, paddingLeft: 16 }}
+                <TouchableRipple
+                  onPress={() => {
+                    openInvalidateSheet();
+                    closeSheet();
+                  }}
+                  rippleColor="rgb(67, 170, 177)"
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    padding: 16,
+                  }}
                 >
-                  Solicitud de Anulación
-                </Text>
-              </>
-            </TouchableRipple>
+                  <>
+                    <Icon
+                      source="cancel"
+                      size={26}
+                      color={theme.colors.onSurface}
+                    />
+                    <Text
+                      variant="bodyLarge"
+                      style={{ color: theme.colors.onSurface, paddingLeft: 16 }}
+                    >
+                      Solicitud de Anulación
+                    </Text>
+                  </>
+                </TouchableRipple>
+              </View>
+            )}
           </View>
         </BottomSheetView>
       </BottomSheetModal>

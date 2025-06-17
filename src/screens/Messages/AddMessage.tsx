@@ -101,7 +101,10 @@ export default function AddMessage() {
       await deleteConfirmCommunication(receivedMessage?.id);
       await getMessages();
       showSnackbar("Mensaje confirmado exitosamente.", "success");
-      navigator.navigate("Messages");
+      navigator.reset({
+        index: 1,
+        routes: [{ name: "Home" }, { name: "Messages" }],
+      });
     } catch (err) {
       const errorMessage = parseErrors(err?.response?.data);
       showSnackbar(
@@ -143,8 +146,12 @@ export default function AddMessage() {
         };
 
         await postUserMessage(payload);
+        await deleteConfirmCommunication(receivedMessage?.id);
         showSnackbar("Mensaje enviado exitosamente.", "success");
-        navigator.navigate("Messages");
+        navigator.reset({
+          index: 1,
+          routes: [{ name: "Home" }, { name: "Messages" }],
+        });
       } catch (err) {
         const errorMessage = parseErrors(err?.response?.data);
         showSnackbar(

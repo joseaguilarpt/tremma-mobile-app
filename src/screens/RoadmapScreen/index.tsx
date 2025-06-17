@@ -31,11 +31,10 @@ export default function RoadmapView() {
   const { setLoading } = useLoading();
   const { orders, roadmap } = useRoadmap();
 
-    const storeActiveRoadmap = async () => {
+  const storeActiveRoadmap = async () => {
     try {
-      await AsyncStorage.setItem("active-roadmap", roadmap.Id);
+      await AsyncStorage.setItem("active-roadmap", String(roadmap.Id));
     } catch (error) {
-      // Handle error if needed
       console.error("Error loading active order:", error);
     }
   };
@@ -52,7 +51,7 @@ export default function RoadmapView() {
       }
       setLoading(true);
       await startRoadmap({ Id: roadmap.Id });
-      await storeActiveRoadmap()
+      await storeActiveRoadmap();
       navigate.navigate("OnGoingOrders", { id: roadmap.Id });
     } catch (error) {
       showSnackbar(

@@ -13,6 +13,8 @@ import DraggableFlatList, {
   ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { Order, Roadmap } from "@/types/Roadmap";
+import { useRoadmap } from "@/context/roadmap";
+import { useLoading } from "@/context/loading.utils";
 
 function OnGoingOrders({
   id,
@@ -26,6 +28,8 @@ function OnGoingOrders({
   onOrdersChange: (orders: Order[], change: { [key: string]: number }) => void;
 }) {
   const navigator = useNavigation();
+  const { refresh } = useRoadmap();
+  const { isLoading, setLoading } = useLoading();
   const flatListRef = useRef(null);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -104,6 +108,17 @@ function OnGoingOrders({
     );
   };
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      await refresh();
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <View style={styles.screenContainer}>
@@ -117,9 +132,19 @@ function OnGoingOrders({
             title={
               <View>
                 <Text variant="titleMedium">Hoja de Ruta en Curso:</Text>
-                <Text>{roadmap.Numero}</Text>
+                <Text>{roadmap?.Numero}</Text>
               </View>
             }
+          />
+          <Appbar.Action
+            onPress={fetchData}
+            icon={({ size, color }) => (
+              <TouchableRipple>
+                <View>
+                  <Icon source="refresh" size={24} />
+                </View>
+              </TouchableRipple>
+            )}
           />
           <Appbar.Action
             onPress={() => navigator.navigate("Messages")}

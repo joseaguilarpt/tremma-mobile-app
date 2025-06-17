@@ -8,6 +8,7 @@ import { getClientById } from "@/api/clients";
 import { getPaymentMethodList } from "@/api/paymentMethods";
 import uuid from "react-native-uuid";
 import { getPaymentListByOrderId } from "@/api/payments";
+import { useAuth } from "./auth";
 
 const RoadmapContext = React.createContext(null);
 
@@ -20,22 +21,41 @@ export const RoadmapProvider = ({ children }) => {
   const [blockedOrders, setBlockedOrders] = React.useState([]);
   const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
+  const { user } = useAuth();
 
   const handleSavePayment = (values) => {
     setPayments((prev) => [...prev, { Id: uuid.v4(), ...values }]);
   };
 
-  const fetchData = async () => {
+  const getStorageOrders = async () => {
     try {
-      const response = await getCurrentRoadmap();
-      setRoadmap(response);
       let alreadyLoaded = {};
-
       const loadedOrders = await AsyncStorage.getItem("loaded-orders");
       if (loadedOrders) {
         const data: { [key: string]: number[] } = JSON.parse(loadedOrders);
         alreadyLoaded = data;
       }
+      return alreadyLoaded;
+    } catch (e) {
+      return {};
+    }
+  };
+
+  const handleOrderReturns = (order: Order) => {
+      const returns = order.Devoluciones ?? [];
+      let pending = []
+      if (returns.length > 0) {
+        pending = returns.filter(
+          (item) => item.Estado !== "Cerrado"
+        );
+      }
+      return pending;
+  }
+  const fetchData = async () => {
+    try {
+      const response = await getCurrentRoadmap();
+      setRoadmap(response);
+      const alreadyLoaded = await getStorageOrders();
       const currentLoadedOrders = alreadyLoaded[response.Id];
       const ordersWithReturns = [];
       (response?.Pedidos ?? [])
@@ -50,24 +70,27 @@ export const RoadmapProvider = ({ children }) => {
               newOrder.Estado = "Cargado";
             }
           }
+          newOrder.Devoluciones = handleOrderReturns(item);
           ordersWithReturns.push(newOrder);
         });
-      setBlockedOrders((response?.Pedidos ?? []).filter((item) => item.Bloqueado));
+      setBlockedOrders(
+        (response?.Pedidos ?? []).filter((item) => item.Bloqueado)
+      );
       setOrders(ordersWithReturns);
       return {
         orders: ordersWithReturns,
         roadmap: response,
-        blockedOrders: (response?.Pedidos ?? []).filter((item) => item.Bloqueado)
-      }
+        blockedOrders: (response?.Pedidos ?? []).filter(
+          (item) => item.Bloqueado
+        ),
+      };
     } catch (error) {
-      showSnackbar(
-        "Error al carga la hoja de ruta, por favor intente nuevamente",
-        "error"
-      );
+      
       return {
         orders: [],
-        roadmap: {}
-      }
+        roadmap: {},
+        blockedOrders: []
+      };
     } finally {
       setLoading(false);
     }
@@ -110,9 +133,11 @@ export const RoadmapProvider = ({ children }) => {
   };
 
   React.useEffect(() => {
-    fetchData();
-    getListData();
-  }, []);
+    if (user?.id) {
+      fetchData();
+      getListData();
+    }
+  }, [user?.id]);
 
   const data = React.useMemo(
     () => ({
@@ -129,6 +154,7 @@ export const RoadmapProvider = ({ children }) => {
       setPayments,
       blockedOrders,
       addPayment: handleSavePayment,
+      getStorageOrders,
       fetchPayments,
     }),
     [roadmap, orders, order, paymentMethods, payments, blockedOrders]
