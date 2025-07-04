@@ -9,8 +9,10 @@ import { useRoadmap } from "@/context/roadmap";
 function Roadmap({
   id,
   onStartRoadmap,
+  onRefresh
 }: {
   id: string;
+  onRefresh: () => void;
   onStartRoadmap: () => void;
 }) {
   const navigator = useNavigation();
@@ -67,6 +69,7 @@ function Roadmap({
               </View>
             }
           />
+          <Appbar.Action icon="refresh" onPress={onRefresh} />
           <Appbar.Action icon="send" onPress={onStartRoadmap} />
         </Appbar.Header>
         <View style={styles.container}>

@@ -14,7 +14,7 @@ const RoadmapContext = React.createContext(null);
 
 export const RoadmapProvider = ({ children }) => {
   const [orders, setOrders] = React.useState<Order[]>([]);
-  const [roadmap, setRoadmap] = React.useState<Roadmap | any>({});
+  const [roadmap, setRoadmap] = React.useState<Roadmap | any>(null);
   const [order, setOrder] = React.useState<Order | any>({});
   const [paymentMethods, setPaymentMethods] = React.useState([]);
   const [payments, setPayments] = React.useState([]);
@@ -42,15 +42,14 @@ export const RoadmapProvider = ({ children }) => {
   };
 
   const handleOrderReturns = (order: Order) => {
-      const returns = order.Devoluciones ?? [];
-      let pending = []
-      if (returns.length > 0) {
-        pending = returns.filter(
-          (item) => item.Estado !== "Cerrado"
-        );
-      }
-      return pending;
-  }
+    const returns = order.Devoluciones ?? [];
+    let pending = [];
+    if (returns.length > 0) {
+      pending = returns.filter((item) => item.Estado !== "Cerrado");
+    }
+    return pending;
+  };
+
   const fetchData = async () => {
     try {
       const response = await getCurrentRoadmap();
@@ -68,7 +67,11 @@ export const RoadmapProvider = ({ children }) => {
             );
             if (orderIsLoaded) {
               newOrder.Estado = "Cargado";
+            } else if ((currentLoadedOrders ?? []).indexOf(item.Id) === -1) {
+              newOrder.Estado = "Asignado";
             }
+          } else {
+            newOrder.Estado = "Asignado";
           }
           newOrder.Devoluciones = handleOrderReturns(item);
           ordersWithReturns.push(newOrder);
@@ -76,6 +79,7 @@ export const RoadmapProvider = ({ children }) => {
       setBlockedOrders(
         (response?.Pedidos ?? []).filter((item) => item.Bloqueado)
       );
+
       setOrders(ordersWithReturns);
       return {
         orders: ordersWithReturns,
@@ -85,11 +89,10 @@ export const RoadmapProvider = ({ children }) => {
         ),
       };
     } catch (error) {
-      
       return {
         orders: [],
         roadmap: {},
-        blockedOrders: []
+        blockedOrders: [],
       };
     } finally {
       setLoading(false);
@@ -112,8 +115,7 @@ export const RoadmapProvider = ({ children }) => {
   const fetchOrder = async (id: string) => {
     try {
       const currentOrder =
-        orders.find((item) => String(item.Id) === String(id)) ?? {};
-      setLoading(true);
+        (orders ?? []).find((item) => String(item.Id) === String(id)) ?? {};
       const response = await getOrderById(id);
       const client = await getClientById(response?.Cliente?.Codigo);
       setOrder({
@@ -127,8 +129,6 @@ export const RoadmapProvider = ({ children }) => {
         "Error al carga el Pedido, por favor intente nuevamente",
         "error"
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -137,6 +137,13 @@ export const RoadmapProvider = ({ children }) => {
       fetchData();
       getListData();
     }
+    const interval = setInterval(() => {
+      console.log("Fetching roadmap data...");
+      if (user?.id) {
+        fetchData();
+      }
+    }, 20 * 1000); // 20 seconds
+    return () => clearInterval(interval);
   }, [user?.id]);
 
   const data = React.useMemo(
@@ -157,7 +164,17 @@ export const RoadmapProvider = ({ children }) => {
       getStorageOrders,
       fetchPayments,
     }),
-    [roadmap, orders, order, paymentMethods, payments, blockedOrders]
+    [
+      roadmap,
+      orders,
+      order,
+      paymentMethods,
+      payments,
+      blockedOrders,
+      fetchOrder,
+      fetchData,
+      setOrder,
+    ]
   );
   return (
     <RoadmapContext.Provider value={data}>{children}</RoadmapContext.Provider>

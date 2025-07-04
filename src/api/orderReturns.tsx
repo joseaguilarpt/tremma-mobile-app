@@ -22,6 +22,16 @@ export const getReturnsList = async (payload) => {
   }
 };
 
+export const getReturnById = async (id) => {
+  try {
+    const response = await api.get(`/devoluciones/${id}`);
+
+    return response.data;
+  } catch (e) {
+    throw e;
+  }
+};
+
 
 export const closeOrderReturn = async (payload) => {
   try {

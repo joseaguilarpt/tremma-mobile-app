@@ -74,10 +74,10 @@ function OnGoingOrders({
         />
         {(item.Devoluciones ?? []).length > 0 &&
           item.Devoluciones.map((order) => (
-            <View key={order.PedidoId} style={{ paddingLeft: 30 }}>
+            <View key={order.Id} style={{ paddingLeft: 30 }}>
               <OrderCard
                 {...order}
-                key={order.PedidoId}
+                key={order.Id}
                 disabled={isActive}
                 showLocation
                 showTimes

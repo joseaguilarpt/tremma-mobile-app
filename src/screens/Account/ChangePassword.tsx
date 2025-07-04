@@ -1,6 +1,7 @@
-import { changePassword } from "@/api";
 import { getSettings } from "@/api/settings";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
+import { useAuth } from "@/context/auth";
+import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
 import { parseErrors } from "@/utils/errors";
 import { useNavigation } from "@react-navigation/native";
@@ -19,6 +20,7 @@ import {
 
 export default function ChangePassword() {
   const [password, setPassword] = useState("");
+  const { setLoading } = useLoading();
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSettings, setPasswordSettings] = useState([]);
   const [validationResults, setValidationResults] = useState([]);
@@ -27,7 +29,62 @@ export default function ChangePassword() {
 
   const { showSnackbar } = useNotifications();
   const navigation = useNavigation();
+  const { changePassword } = useAuth();
   const theme = useTheme();
+
+  const validateErrors = (): string | null => {
+    if (password !== confirmPassword) {
+      return `La contraseña debe coincidir con la confirmación.`;
+    }
+    for (const setting of passwordSettings) {
+      switch (setting.Codigo) {
+        case "caracteres_clave":
+          if (password.length < parseInt(setting.Valor1, 10)) {
+            return `La contraseña debe tener al menos ${setting.Valor1} caracteres.`;
+          }
+          break;
+        case "mayusculas_clave":
+          if (
+            setting.Valor1 === "true" &&
+            (password.match(/[A-Z]/g) || []).length <
+              parseInt(setting.Valor2 || "0", 10)
+          ) {
+            return `La contraseña debe tener al menos ${setting.Valor2} letra(s) mayúscula(s).`;
+          }
+          break;
+        case "minusculas_clave":
+          if (
+            setting.Valor1 === "true" &&
+            (password.match(/[a-z]/g) || []).length <
+              parseInt(setting.Valor2 || "0", 10)
+          ) {
+            return `La contraseña debe tener al menos ${setting.Valor2} letra(s) minúscula(s).`;
+          }
+          break;
+        case "numeros_clave":
+          if (
+            setting.Valor1 === "true" &&
+            (password.match(/\d/g) || []).length <
+              parseInt(setting.Valor2 || "0", 10)
+          ) {
+            return `La contraseña debe tener al menos ${setting.Valor2} número(s).`;
+          }
+          break;
+        case "especiales_clave":
+          if (
+            setting.Valor1 === "true" &&
+            (password.match(/[^a-zA-Z0-9]/g) || []).length <
+              parseInt(setting.Valor2 || "0", 10)
+          ) {
+            return `La contraseña debe tener al menos ${setting.Valor2} caracter(es) especial(es).`;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    return null; // No errors
+  };
   const generateValidationRules = (password: string) => {
     return passwordSettings.map((setting) => {
       const validate = (): boolean => {
@@ -119,33 +176,32 @@ export default function ChangePassword() {
   const handleChangePassword = async () => {
     try {
       if (password !== confirmPassword) {
-        showSnackbar("Passwords do not match!", "error");
+        showSnackbar("Las contraseñas no coinciden.", "error");
         return;
       }
 
-      const errors = validationResults.filter((result) => !result.isValid);
-      if (errors.length > 0) {
-        showSnackbar("Please fix the validation errors.", "error");
+      const errors = validateErrors();
+      console.log(errors, "errors");
+      if (!!errors) {
+        showSnackbar(errors, "error");
         return;
       }
 
-      await changePassword({
-        password: password,
-        confirmPassword: confirmPassword,
-      });
+      setLoading(true);
+      await changePassword(password, confirmPassword);
       setPassword("");
       setConfirmPassword("");
-      showSnackbar("Password updated successfully!", "error");
+      showSnackbar("Clave actualizada exitosamente!", "error");
       navigation.navigate("Home");
     } catch (err) {
-      const errorMessage = parseErrors(err.response.data);
-      let message =
-        "Error al cambiar la clave. Por favor, intenta nuevamente.";
+      let message = "Error al cambiar la clave. Por favor, intenta nuevamente.";
 
-      if (errorMessage.length > 0) {
-        message = errorMessage[0];
+      if (err.response.data) {
+        message = err.response.data;
       }
       showSnackbar(message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 

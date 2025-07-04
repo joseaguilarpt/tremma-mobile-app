@@ -60,13 +60,7 @@ function Dashboard() {
       setLoading(false);
     }
   };
-
-  const initialize = useCallback(() => {
-    if (roadmap) {
-      fetchData();
-    }
-  }, [roadmap, orders]);
-
+  
   const handleRefresh = async () => {
     try {
       setLoading(true)
@@ -78,6 +72,11 @@ function Dashboard() {
       setLoading(false);
     }
   }
+
+  const initialize = useCallback(() => {
+      fetchData();
+  }, [roadmap, orders]);
+
 
   useFocusEffect(initialize);
 

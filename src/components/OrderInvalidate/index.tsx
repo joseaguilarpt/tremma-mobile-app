@@ -13,6 +13,7 @@ import { useKeyboardListener } from "@/hooks/useKeyboardListener";
 import { useNotifications } from "@/context/notification";
 import { invalidateOrderAssignment } from "@/api/orders";
 import { useLoading } from "@/context/loading.utils";
+import { useNavigation } from "@react-navigation/native";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -26,6 +27,7 @@ export default function OrderInvalidateSheet({
   bottomSheetRef,
 }: OrderMenuProps) {
   const theme = useTheme();
+  const navigator = useNavigation();
   const { refresh, roadmap } = useRoadmap();
   const { showSnackbar } = useNotifications();
   const { setLoading, isLoading } = useLoading();
@@ -57,9 +59,23 @@ export default function OrderInvalidateSheet({
         Id: roadmap.Id,
         orders: [selectedOrder.Id],
       });
-      await refresh();
+      const resp = await refresh();
+
       handleClose();
+
       showSnackbar("Solicitud de anulación enviada exitosamente.", "success");
+
+      if (resp?.orders && resp?.orders?.length === 0) {
+        navigator.reset({
+          index: 0,
+          routes: [{ name: "CloseRoadmap", params: { id: roadmap.Numero } }],
+        });
+      } else {
+        navigator.reset({
+          index: 0,
+          routes: [{ name: "OnGoingOrders", params: { id: roadmap.Id } }],
+        });
+      }
     } catch (error) {
       setLoading(false);
       showSnackbar(

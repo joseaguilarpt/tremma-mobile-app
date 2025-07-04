@@ -55,7 +55,7 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
 
       const intervalId = setInterval(() => {
         checkMessages();
-      }, 5 * 60 * 1000); // Every 5 minutes
+      }, 1 * 30 * 1000); // Every 30 seconds
 
       return () => clearInterval(intervalId);
     }

@@ -1,9 +1,8 @@
-import * as BackgroundFetch from "expo-background-task";
+import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
 import * as Notifications from "expo-notifications";
 import { getCommunications } from "@/api/communication";
 import { getAuthData, isTokenExpired, refreshToken } from "@/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sendNotification } from "@/utils/notifications";
 
 export const BACKGROUND_TASK_NAME = "background-fetch-task";
@@ -31,10 +30,9 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
       await refreshToken();
     }
     const data = await getAuthData();
-    // Comprobar si hay un ID de usuario válido
     if (!data?.user?.id) {
       console.log("No hay user.Id disponible. Saltando la llamada a la API.");
-      return BackgroundFetch.BackgroundTaskResult.Failed;
+      return BackgroundTask.BackgroundTaskResult.Failed;
     }
 
     const response = await getCommunications({ userId: data?.user?.id });
@@ -50,10 +48,9 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
       });
     }
 
-    await AsyncStorage.setItem("last_messages_check", new Date().toISOString());
-    return BackgroundFetch.BackgroundTaskResult.Success;
+    return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {
     console.error("Error en la tarea de background:", error);
-    return BackgroundFetch.BackgroundTaskResult.Failed;
+    return BackgroundTask.BackgroundTaskResult.Failed;
   }
 });

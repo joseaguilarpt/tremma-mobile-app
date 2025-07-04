@@ -146,7 +146,9 @@ export default function AddMessage() {
         };
 
         await postUserMessage(payload);
-        await deleteConfirmCommunication(receivedMessage?.id);
+        if (receivedMessage?.id) {
+          await deleteConfirmCommunication(receivedMessage?.id);
+        }
         showSnackbar("Mensaje enviado exitosamente.", "success");
         navigator.reset({
           index: 1,

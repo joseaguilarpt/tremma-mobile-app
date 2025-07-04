@@ -1,34 +1,27 @@
 import React, { useCallback, useRef, useState } from "react";
 import { View, StyleSheet } from "react-native";
-import {
-  Appbar,
-  Badge,
-  Icon,
-  Text,
-  TouchableRipple,
-} from "react-native-paper";
-import {
-  useNavigation,
-} from "@react-navigation/native";
+import { Appbar, Badge, Icon, Text, TouchableRipple } from "react-native-paper";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import OrderInvalidateSheet from "@/components/OrderInvalidate";
-import { Order } from "@/types/Roadmap";
 import { CreditPayments } from "./CreditPayments";
 import DisplayList from "@/components/DisplayList";
 import { CashPayments } from "./CashPayments";
+import { useRoadmap } from "@/context/roadmap";
 
 enum PaymentType {
   Credit = 1,
   Cash = 2,
 }
 
-function OrderPayments({ order }: { order: Order }) {
+function OrderPayments() {
   const navigator = useNavigation();
   const { messages } = useNotifications();
+  const { order } = useRoadmap()
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const openSheet = useCallback(() => {
@@ -49,7 +42,6 @@ function OrderPayments({ order }: { order: Order }) {
       value: order?.CondicionPago?.Descripcion ?? "-",
     },
   ];
-
 
   return (
     <ProtectedRoute>
@@ -98,19 +90,17 @@ function OrderPayments({ order }: { order: Order }) {
         <ScrollView style={styles.container}>
           <Text variant="titleMedium">Detalles:</Text>
           <DisplayList data={data} />
-          {order?.CondicionPago?.Id === PaymentType.Credit && (
+          {order?.CondicionPago?.Id === PaymentType.Cash ? (
+            <CashPayments />
+          ) : (
             <CreditPayments />
           )}
-          {order?.CondicionPago?.Id === PaymentType.Cash && (
-            <CashPayments /> )}
-
         </ScrollView>
         <OrderInvalidateSheet
           closeSheet={closeSheet}
           selectedOrder={order}
           bottomSheetRef={bottomSheetRef}
         />
-
       </View>
     </ProtectedRoute>
   );

@@ -16,6 +16,7 @@ import OrderDetails from "../OrderDetails";
 import OrderPayments from "../Payments";
 import { useRoadmap } from "@/context/roadmap";
 import { useNotifications } from "@/context/notification";
+import { refresh } from "@react-native-community/netinfo";
 
 const Tab = createBottomTabNavigator();
 
@@ -24,14 +25,19 @@ export default function OrderDetailsScreen() {
   const route = useRoute();
   const params = route.params as { [key: string]: string | number };
   const { showSnackbar } = useNotifications();
+  const { setLoading } = useLoading();
   const [isOpenMap, setIsOpenMap] = React.useState(false);
 
-  const { order, fetchOrder, orders, setOrders, setOrder } = useRoadmap();
+  const { order, fetchOrder, orders, setOrders, setOrder, refresh } = useRoadmap();
   const handleFetchOrder = async () => {
+    setLoading(true);
+
     try {
       await fetchOrder(params.id);
     } catch (error) {
       showSnackbar("Error al cargar el pedido, intente nuevamente.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,6 +52,17 @@ export default function OrderDetailsScreen() {
       setOrder({});
     };
   }, []);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("Fetching order data...");
+      refresh();
+      fetchOrder(order.Id); // Call async function inside a sync callback
+    }, 20 * 1000); // 5 seconds
+    return () => {
+      clearInterval(interval);
+    };
+  }, [order]);
 
   return (
     <ProtectedRoute>

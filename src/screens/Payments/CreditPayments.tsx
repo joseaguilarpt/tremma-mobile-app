@@ -31,6 +31,7 @@ export function CreditPayments() {
   const [comments, setComments] = useState("");
   const navigator = useNavigation();
   const { showSnackbar } = useNotifications();
+
   const data = [
     {
       label: "Monto de la factura",
@@ -71,17 +72,14 @@ export function CreditPayments() {
       const payload = {
         ...(currentPayment ?? {}),
         pedidoId: order?.Id,
-        monto: order?.Monto,
+        monto: order?.Monto ? order.Monto : 0.001,
         observaciones: comments,
         usuario: user.username,
-      };
-
-      if (order?.CondicionPago) {
-        payload.metodoPago = {
+        metodoPago: {
           id: 10,
           descripcion: "Otros Métodos",
-        };
-      }
+        },
+      };
 
       let api = postPayment;
       if (currentPayment) {
@@ -96,7 +94,11 @@ export function CreditPayments() {
         routes: [{ name: "OnGoingOrders", params: { id: roadmap.id } }],
       });
     } catch (error) {
-      console.error(error);
+            showSnackbar(
+        error?.response?.data?.errors?.Messages?.[0] ||
+          "Error al agregar pago, intente nuevamente.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }

@@ -19,47 +19,67 @@ import { useNotifications } from "@/context/notification";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import OrderInvalidateSheet from "@/components/OrderInvalidate";
-import { closeOrderReturn } from "@/api/orderReturns";
+import { closeOrderReturn, getReturnById } from "@/api/orderReturns";
 import { useRoadmap } from "@/context/roadmap";
+import { useLoading } from "@/context/loading.utils";
 
 function ReturnDetailsScreen() {
   const route = useRoute();
   const params = route.params as { [key: string]: string | number };
-  const [order, setOrder] = useState(null);
+  const { order } = useRoadmap();
+  const { setLoading }= useLoading();
 
-  const { refresh, roadmap } = useRoadmap();
+  const { refresh, roadmap, orders } = useRoadmap();
   const { showSnackbar } = useNotifications();
   const [formState, setFormState] = React.useState({
-    Producto: "",
+    Productos: "",
     Observaciones: "",
   });
-  const handleParams = useCallback(() => {
-    if (params.PedidoId) {
-      setOrder(params);
-      setFormState((prev) => ({
-        ...prev,
-        Producto: params.Bultos ? String(params.Bultos) : "",
-        Observaciones: "",
-      }));
+
+
+  const getReturn = async () => {
+    try {
+      setLoading(true);
+      const returnData = await getReturnById(params.id as string);
+      const currentOrder = orders?.find((item) => String(item.Id) === String(params.PedidoId));
+        let payload = {...returnData };
+      if (currentOrder?.Devoluciones?.length > 0) {
+        const currentReturn = currentOrder.Devoluciones.find(
+          (item) => String(item.Id) === String(params.id)
+        );
+        if (currentReturn) {
+          payload = {
+            ...payload,
+            ...currentReturn,
+            Productos: returnData?.Productos
+          };
+        }
+      }
+      setFormState(payload);
+    } catch (error) {
+      showSnackbar(
+        "Error al cargar la devolución, intente nuevamente.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleParams = useCallback(() => {
+    getReturn();
   }, [params]);
 
   useFocusEffect(handleParams);
+
   const navigator = useNavigation();
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const { messages } = useNotifications();
-  const openSheet = useCallback(() => {
-    bottomSheetRef.current?.present();
-  }, []);
 
   const closeSheet = useCallback(() => {
     bottomSheetRef.current?.dismiss();
   }, []);
-
-  const handleClick = () => {
-    openSheet();
-  };
 
   const handleInputChange = (field: keyof typeof formState, value: string) => {
     setFormState((prev) => ({
@@ -71,11 +91,11 @@ function ReturnDetailsScreen() {
   const data = [
     {
       label: "Número de pedido relacionado",
-      value: order?.Numero ?? "-",
+      value: formState?.Numero ?? "-",
     },
     {
       label: "Nombre del cliente",
-      value: order?.NombreCliente ?? "-",
+      value: formState?.NombreCliente ?? "-",
     },
   ];
 
@@ -93,7 +113,8 @@ function ReturnDetailsScreen() {
         return;
       }
       const payload = {
-        id: order?.Id,
+        ...formState,
+        id: formState?.Id,
         descripcion: formState.Observaciones,
       };
 
@@ -105,7 +126,6 @@ function ReturnDetailsScreen() {
         id: roadmap.Id,
       });
     } catch (error) {
-      console.log(error, "error");
       showSnackbar("Error al actualizar la devolución.", "error");
     }
   };
@@ -175,9 +195,9 @@ function ReturnDetailsScreen() {
                 mode="outlined"
                 label="Productos"
                 disabled
-                value={formState.Producto}
+                value={formState.Productos}
                 style={{ marginTop: 10 }}
-                onChangeText={(value) => handleInputChange("Producto", value)}
+                onChangeText={(value) => handleInputChange("Productos", value)}
               />
               <Text style={{ marginTop: 20 }} variant="titleMedium">
                 Observaciones:
@@ -203,7 +223,7 @@ function ReturnDetailsScreen() {
               mode="contained"
               style={{ marginTop: 20 }}
             >
-              Guardar
+              Recibida
             </Button>
           </View>
         </ScrollView>

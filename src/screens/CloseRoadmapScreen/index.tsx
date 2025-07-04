@@ -155,7 +155,6 @@ function CloseRoadmap({ id }: { id: string }) {
       if (imageId) {
         payload.imagen = imageId;
       }
-      console.log("Payload to close roadmap:", payload);
       await finishRoadmap(payload);
       showSnackbar("Hoja de Ruta cerrada exitosamente.", "success");
       await refresh();

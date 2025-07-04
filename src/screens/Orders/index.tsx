@@ -11,9 +11,11 @@ import { useRoadmap } from "@/context/roadmap";
 
 function Orders({
   id,
+  onRefresh,
   onStartRoadmap,
 }: {
   id: string;
+  onRefresh?: () => void;
   onStartRoadmap: () => void;
 }) {
   const navigator = useNavigation();
@@ -21,9 +23,7 @@ function Orders({
   const [selectedOrder, setSelectedOrder] = React.useState(null);
 
   const { orders, roadmap } = useRoadmap();
-
-
-
+  
   const openSheet = useCallback(() => {
     bottomSheetRef.current?.present();
   }, []);
@@ -53,6 +53,7 @@ function Orders({
               </View>
             }
           />
+          <Appbar.Action icon="refresh" onPress={onRefresh} />
           <Appbar.Action icon="send" onPress={onStartRoadmap} />
         </Appbar.Header>
         <View style={styles.container}>

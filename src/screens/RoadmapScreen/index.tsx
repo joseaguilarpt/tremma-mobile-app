@@ -29,7 +29,7 @@ export default function RoadmapView() {
   const params = route.params as { id: string };
   const { showSnackbar } = useNotifications();
   const { setLoading } = useLoading();
-  const { orders, roadmap } = useRoadmap();
+  const { orders, roadmap, refresh } = useRoadmap();
 
   const storeActiveRoadmap = async () => {
     try {
@@ -62,6 +62,19 @@ export default function RoadmapView() {
       setLoading(false);
     }
   };
+
+      const handleRefresh = async () => {
+    try {
+      setLoading(true)
+      await refresh();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
+    finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <ProtectedRoute>
       <View style={{ flex: 1 }}>
@@ -121,7 +134,7 @@ export default function RoadmapView() {
             }}
           >
             {() => (
-              <Roadmap id={params.id} onStartRoadmap={handleStartRoadmap} />
+              <Roadmap id={params.id} onRefresh={handleRefresh} onStartRoadmap={handleStartRoadmap} />
             )}
           </Tab.Screen>
           <Tab.Screen
@@ -134,7 +147,7 @@ export default function RoadmapView() {
             }}
           >
             {() => (
-              <OrdersTab id={params.id} onStartRoadmap={handleStartRoadmap} />
+              <OrdersTab onRefresh={handleRefresh} id={params.id} onStartRoadmap={handleStartRoadmap} />
             )}
           </Tab.Screen>
         </Tab.Navigator>

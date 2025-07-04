@@ -1,5 +1,7 @@
 import { useAuth } from "@/context/auth";
+import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
+import { useRoadmap } from "@/context/roadmap";
 import { useNavigation } from "@react-navigation/native";
 import { View, StyleSheet } from "react-native";
 import {
@@ -15,9 +17,22 @@ import {
 export default function NavigationBar() {
   const theme = useTheme();
   const { imageSrc, user = {} } = useAuth();
-  const { messages } = useNotifications()
-
+  const { setLoading} = useLoading();
+  const { messages } = useNotifications();
+  const { refresh } = useRoadmap()
   const navigator = useNavigation();
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      await refresh();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
+    finally {
+      setLoading(false);
+    }
+  };
   return (
     <Appbar.Header>
       {imageSrc && (
@@ -33,11 +48,14 @@ export default function NavigationBar() {
         <Avatar.Text
           style={styles.avatar}
           size={40}
-          label={user?.name?.charAt(0) ?? 'U'}
+          label={user?.name?.charAt(0) ?? "U"}
         />
       )}
       <Appbar.Content title="" />
-
+      <Appbar.Action
+        onPress={fetchData}
+        icon="refresh"
+      />
       <Appbar.Action
         onPress={() => navigator.navigate("Messages")}
         icon={({ size, color }) => (
