@@ -141,9 +141,36 @@ export default function OnGoingScreen() {
             )}
           </Tab.Screen>
           <Tab.Screen
+            name="MapView"
+            options={{
+              tabBarLabel: "Ver Mapa",
+
+              tabBarIcon: ({ color, size }) => {
+                return <Icon name="map" size={size} color={color} />;
+              },
+            }}
+            listeners={{
+              tabPress: async (e) => {
+                // Prevent default action
+                e.preventDefault();
+                // Trigger your action here (e.g., refresh)
+                setIsOpenMap(true);
+                // Then navigate manually
+              },
+            }}
+          >
+            {() => (
+              <OrdersMap
+                orders={orders}
+                isOpen={isOpenMap}
+                closeModal={() => setIsOpenMap(false)}
+              />
+            )}
+          </Tab.Screen>
+          <Tab.Screen
             name="DetalleHoja"
             options={{
-              tabBarLabel: "Detalles Hoja de Ruta",
+              tabBarLabel: "Hoja de Ruta",
               headerShown: false,
               tabBarIcon: ({ color, size }) => {
                 return <Icon name="home" size={size} color={color} />;
@@ -159,17 +186,7 @@ export default function OnGoingScreen() {
             )}
           </Tab.Screen>
         </Tab.Navigator>
-        <View style={{ position: "relative" }}>
-          <TouchableOpacity
-            onPress={() => setIsOpenMap(true)}
-            style={[
-              styles.floatingButton,
-              { backgroundColor: theme.colors.primary },
-            ]}
-          >
-            <Icon name="map" size={30} color="white" />
-          </TouchableOpacity>
-        </View>
+        
         <OrdersMap
           orders={orders}
           isOpen={isOpenMap}

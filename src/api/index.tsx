@@ -162,7 +162,7 @@ export const refreshToken = async () => {
     const authData = await getAuthData();
     if (!authData?.refreshToken) {
       await clearAuthData();
-      throw new Error("No refresh token available");
+   //   throw new Error("No refresh token available");
     }
 
     const { data } = await api.post(API_URL + "/auth/refresh-token", {

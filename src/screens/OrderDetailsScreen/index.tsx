@@ -28,7 +28,8 @@ export default function OrderDetailsScreen() {
   const { setLoading } = useLoading();
   const [isOpenMap, setIsOpenMap] = React.useState(false);
 
-  const { order, fetchOrder, orders, setOrders, setOrder, refresh } = useRoadmap();
+  const { order, fetchOrder, orders, setOrders, setOrder, refresh } =
+    useRoadmap();
   const handleFetchOrder = async () => {
     setLoading(true);
 
@@ -79,6 +80,7 @@ export default function OrderDetailsScreen() {
               style={{
                 backgroundColor: theme.colors.surface,
                 marginHorizontal: -40,
+                paddingHorizontal: 40,
               }}
               inactiveColor={theme.colors.secondary}
               activeColor={theme.colors.onPrimary}
@@ -130,6 +132,33 @@ export default function OrderDetailsScreen() {
             )}
           </Tab.Screen>
           <Tab.Screen
+            name="OrderMapView"
+            options={{
+              tabBarLabel: "Ver Mapa",
+
+              tabBarIcon: ({ color, size }) => {
+                return <Icon name="map" size={size} color={color} />;
+              },
+            }}
+            listeners={{
+              tabPress: async (e) => {
+                // Prevent default action
+                e.preventDefault();
+                // Trigger your action here (e.g., refresh)
+                setIsOpenMap(true);
+                // Then navigate manually
+              },
+            }}
+          >
+            {() => (
+              <OrdersMap
+                orders={[order]}
+                isOpen={isOpenMap}
+                closeModal={() => setIsOpenMap(false)}
+              />
+            )}
+          </Tab.Screen>
+          <Tab.Screen
             name="OrderPayments"
             options={{
               tabBarLabel: "Pago",
@@ -144,17 +173,6 @@ export default function OrderDetailsScreen() {
             )}
           </Tab.Screen>
         </Tab.Navigator>
-        <View style={{ position: "relative" }}>
-          <TouchableOpacity
-            onPress={() => setIsOpenMap(true)}
-            style={[
-              styles.floatingButton,
-              { backgroundColor: theme.colors.primary },
-            ]}
-          >
-            <Icon name="map" size={30} color="white" />
-          </TouchableOpacity>
-        </View>
         <OrdersMap
           orders={[order]}
           isOpen={isOpenMap}

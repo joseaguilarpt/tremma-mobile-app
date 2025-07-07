@@ -167,7 +167,7 @@ export function AuthProvider({
             logout(); // If refresh fails, log out
           }
         } catch (error) {
-          console.error("Token refresh failed:", error);
+        //  console.error("Token refresh failed:", error);
           logout(); // If token refresh fails, log out
         } finally {
           setLoaded(true); // Token is still valid, set loaded to true

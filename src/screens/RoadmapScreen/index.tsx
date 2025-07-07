@@ -17,6 +17,7 @@ import { useRoadmap } from "@/context/roadmap";
 import { startRoadmap } from "@/api/orders";
 import { useLoading } from "@/context/loading.utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import OnGoingScreen from "../OnGoingScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -63,17 +64,16 @@ export default function RoadmapView() {
     }
   };
 
-      const handleRefresh = async () => {
+  const handleRefresh = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       await refresh();
     } catch (error) {
       console.error("Error refreshing data:", error);
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <ProtectedRoute>
@@ -90,6 +90,7 @@ export default function RoadmapView() {
               style={{
                 backgroundColor: theme.colors.surface,
                 marginHorizontal: -40,
+                paddingHorizontal: 40,
               }}
               inactiveColor={theme.colors.secondary}
               activeColor={theme.colors.onPrimary}
@@ -134,8 +135,33 @@ export default function RoadmapView() {
             }}
           >
             {() => (
-              <Roadmap id={params.id} onRefresh={handleRefresh} onStartRoadmap={handleStartRoadmap} />
+              <Roadmap
+                id={params.id}
+                onRefresh={handleRefresh}
+                onStartRoadmap={handleStartRoadmap}
+              />
             )}
+          </Tab.Screen>
+          <Tab.Screen
+            name="OnGoingOrders"
+            options={{
+              tabBarLabel: "Iniciar Ruta",
+
+              tabBarIcon: ({ color, size }) => {
+                return <Icon name="send" size={size} color={color} />;
+              },
+            }}
+            listeners={{
+              tabPress: async (e) => {
+                // Prevent default action
+                e.preventDefault();
+                // Trigger your action here (e.g., refresh)
+                await handleStartRoadmap();
+                // Then navigate manually
+              },
+            }}
+          >
+            {() => <OnGoingScreen />}
           </Tab.Screen>
           <Tab.Screen
             name="DetallePedidos"
@@ -147,20 +173,14 @@ export default function RoadmapView() {
             }}
           >
             {() => (
-              <OrdersTab onRefresh={handleRefresh} id={params.id} onStartRoadmap={handleStartRoadmap} />
+              <OrdersTab
+                onRefresh={handleRefresh}
+                id={params.id}
+                onStartRoadmap={handleStartRoadmap}
+              />
             )}
           </Tab.Screen>
         </Tab.Navigator>
-
-        <TouchableOpacity
-          onPress={handleStartRoadmap}
-          style={[
-            styles.floatingButton,
-            { backgroundColor: theme.colors.primary },
-          ]}
-        >
-          <Icon name="send" size={30} color="white" />
-        </TouchableOpacity>
       </View>
     </ProtectedRoute>
   );
