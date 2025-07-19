@@ -7,6 +7,13 @@
     "preview": {
       "developmentClient": false,
       "distribution": "internal"
+    },
+     "production": {
+      "releaseChannel": "production",
+      "distribution": "store",
+      "android": {
+        "buildType": "apk"
+      }
     }
   }
 }

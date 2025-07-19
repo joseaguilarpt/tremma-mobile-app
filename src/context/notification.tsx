@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import { getCommunications } from "../api/communication";
 import { useAuth } from "./auth";
 import { NotificationContext } from "./notification.utils";
+import { dayCR } from "@/utils/dates";
 
 // Create NotificationContext
 
@@ -37,15 +38,16 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
   const checkMessages = async () => {
     try {
       const response = await getCommunications({ userId: user?.id });
-      const messagesList = response.map((item) => ({
+      const messagesList = response.filter(item => {
+        const limitDate = dayCR().subtract(5, "days")
+        return dayCR(item.Fecha).isAfter(limitDate)
+      }).map((item) => ({
         ...item,
-        Fecha: item.Fecha,
+        Fecha: dayjs(item.Fecha).format("lll"),
       }));
 
       setMessages(messagesList ?? []);
-    } catch (error) {
-      console.error("Failed to fetch messages:", error);
-    }
+    } catch {}
   };
 
   // Periodically check for messages if the user is logged in
