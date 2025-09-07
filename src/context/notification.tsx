@@ -39,6 +39,7 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const response = await getCommunications({ userId: user?.id });
       const messagesList = response.filter(item => {
+        if (!item.Fecha) return false;
         const limitDate = dayCR().subtract(5, "days")
         return dayCR(item.Fecha).isAfter(limitDate)
       }).map((item) => ({

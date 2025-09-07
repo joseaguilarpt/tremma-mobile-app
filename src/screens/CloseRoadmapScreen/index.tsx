@@ -100,7 +100,7 @@ function CloseRoadmap({ id }: { id: string }) {
   const handleSave = async () => {
     try {
       const { blockedOrders } = await refresh();
-      if (!formState.Comprobante && roadmap.TotalContado > 0) {
+      if (!formState.Comprobante && formState.Efectivo > 0) {
         showSnackbar("Por favor adjunte un archivo comprobante.", "error");
         return;
       }

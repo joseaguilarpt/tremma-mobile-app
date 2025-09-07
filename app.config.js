@@ -65,6 +65,6 @@ export default ({ config }) => ({
         projectId: "cec49e41-ff33-4c34-9d46-c2af936142d7",
       },
     },
-    owner: "joseaguilarpt",
+    owner: "arrow-tremma",
   },
 });

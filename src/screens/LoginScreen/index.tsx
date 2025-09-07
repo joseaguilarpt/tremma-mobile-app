@@ -3,9 +3,9 @@ import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
 import { RootStackParamList } from "@/types/Routes";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useCallback } from "react";
 import { GestureResponderEvent, Image, StyleSheet, View } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 
@@ -18,6 +18,15 @@ const LoginScreen = () => {
   const { login } = useAuth();
   const { showSnackbar } = useNotifications();
   const { setLoading, isLoading: loading } = useLoading();
+
+  useFocusEffect(
+  useCallback(() => {
+    clearAuthData();
+    setUsername("");
+    setPassword("");
+  }, [])
+);
+
 
   const validateErrors = () => {
     if (!username) {
