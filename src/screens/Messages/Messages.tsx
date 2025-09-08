@@ -34,7 +34,6 @@ dayjs.extend(relativeTime);
 
 const formatMessageDate = (dateString: string) => {
   const date = dayCR(dateString);
-
   if (date.isSame(dayCR(), "d")) {
     return date.format("HH:mm");
   } else if (date.isSame(dayCR().subtract(1, "d"), "d")) {
@@ -346,7 +345,7 @@ export default function Messages() {
                     25
                   );
                   const subTitle = setTruncatedText(item.Asunto, 30);
-                  const date = formatMessageDate(item.Fecha);
+                  const date = formatMessageDate(item.FechaString);
                   return (
                     <TouchableRipple
                       onPress={() =>

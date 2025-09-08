@@ -44,7 +44,8 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
         return dayCR(item.Fecha).isAfter(limitDate)
       }).map((item) => ({
         ...item,
-        Fecha: dayjs(item.Fecha).format("lll"),
+        FechaString: item.Fecha,
+        Fecha: dayjs(item.Fecha).format("DD/MM/YYYY HH:mm"),
       }));
 
       setMessages(messagesList ?? []);
