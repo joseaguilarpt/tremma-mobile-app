@@ -8,6 +8,7 @@ import { Order } from "@/types/Roadmap";
 import { useNotifications } from "@/context/notification";
 
 import { Linking, Platform } from "react-native";
+import { MAPS_ALSA } from "@/config";
 
 const openNavigation = async (
   latitude: number,
@@ -176,7 +177,8 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
   }, [points]);
 
   const fetchRoute = async (points) => {
-    const origin = `${points[0].coordinate.latitude},${points[0].coordinate.longitude}`;
+    try {
+          const origin = `${points[0].coordinate.latitude},${points[0].coordinate.longitude}`;
     const destination = `${points[points.length - 1].coordinate.latitude},${
       points[points.length - 1].coordinate.longitude
     }`;
@@ -185,7 +187,7 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
       .map((p) => `${p.coordinate.latitude},${p.coordinate.longitude}`)
       .join("|");
 
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=AIzaSyAfRinD8hK00IEQ0I6gs3bhtsUfPdFlcAE${
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${MAPS_ALSA}${
       waypoints ? `&waypoints=${waypoints}` : ""
     }`;
 
@@ -195,6 +197,9 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
       const encoded = json.routes[0].overview_polyline.points;
       const decoded = decodePolyline(encoded);
       setRouteCoords(decoded);
+    }
+    } catch (error) {
+      console.log(error, "error")
     }
   };
 

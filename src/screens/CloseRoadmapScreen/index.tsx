@@ -19,6 +19,10 @@ import { useRoadmap } from "@/context/roadmap";
 import { postFile } from "@/api/files";
 import { finishRoadmap } from "@/api/orders";
 import { getTotalPaymentByRoadmap } from "@/api/payments";
+import { getReportPDF } from "@/api/report";
+import { useAuth } from "@/context/auth";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 function filterNullValues<T extends object>(obj: Nullable<T>): T {
   // Check if the value is an object and not an array
@@ -38,6 +42,7 @@ function filterNullValues<T extends object>(obj: Nullable<T>): T {
 function CloseRoadmap({ id }: { id: string }) {
   const navigator = useNavigation();
   const route = useRoute();
+  const { user } = useAuth();
   const params = route.params as { [key: string]: string | number };
   const { setLoading, isLoading } = useLoading();
   const { roadmap, refresh } = useRoadmap();
@@ -94,6 +99,43 @@ function CloseRoadmap({ id }: { id: string }) {
         ...prev,
         [field]: null,
       }));
+    }
+  };
+
+  const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
+  const handleGeneratePDF = async () => {
+    try {
+      setLoading(true);
+      const report = await getReportPDF("rptDetalleHojaRuta", [
+        { item1: "usuario", item2: user?.username },
+        { item1: "hojaRutaId", item2: roadmap?.Id },
+      ]);
+
+      const fileUri = FileSystem.cacheDirectory + "reporte.pdf";
+      const base64Pdf = arrayBufferToBase64(report);
+
+      // Guardar el string tal cual, como UTF-8 (no base64)
+      await FileSystem.writeAsStringAsync(fileUri, base64Pdf, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri);
+      } else {
+        alert("Este dispositivo no soporta compartir archivos.");
+      }
+    } catch (error) {
+      console.error("Error al generar PDF:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -308,7 +350,8 @@ function CloseRoadmap({ id }: { id: string }) {
                   icon="file-export-outline"
                   mode="outlined"
                   textColor="white"
-                  //  onPress={clearForm}
+                  disabled={isLoading}
+                  onPress={handleGeneratePDF}
                 >
                   Informe de Hoja
                 </Button>
