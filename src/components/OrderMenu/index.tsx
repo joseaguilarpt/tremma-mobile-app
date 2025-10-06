@@ -15,11 +15,11 @@ import {
 import { StyleSheet, View } from "react-native";
 import OrderInvalidateSheet from "../OrderInvalidate";
 import OrderNotLoadedSheet from "../OrderNotLoaded";
-import { confirmOrderAssignment } from "@/api/orders";
 import { useNotifications } from "@/context/notification";
 import { useLoading } from "@/context/loading.utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoadmap } from "@/context/roadmap";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -39,6 +39,7 @@ export default function OrderSheet({
   const snapPoints = useMemo(() => ["40%"], []);
   const invalidateSheetRef = useRef<BottomSheetModal>(null);
   const notLoadedSheetRef = useRef<BottomSheetModal>(null);
+  const { markOrderAsLoaded } = useExpoSQLiteOperations()
 
   const openInvalidateSheet = useCallback(() => {
     invalidateSheetRef.current?.present();
@@ -86,16 +87,15 @@ export default function OrderSheet({
       closeSheet();
       setLoading(true);
 
-      const payload = {
-        Id: roadmap.Id,
-        orders: [selectedOrder.Id],
-      };
-      await confirmOrderAssignment(payload);
+      await markOrderAsLoaded(roadmap.Id, {
+        id: selectedOrder.Id,
+      });
       await addLoadedId();
       await refresh();
       showSnackbar("Pedido marcado como cargado exitosamente.", "success");
     } catch (error) {
       setLoading(false);
+      console.error("Error marking order as loaded:", error);
       showSnackbar(
         error?.response?.data?.errors?.Messages?.[0] ||
           "Error al Marcar como Cargado.",

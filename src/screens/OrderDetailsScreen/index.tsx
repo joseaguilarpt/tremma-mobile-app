@@ -16,13 +16,15 @@ import OrderDetails from "../OrderDetails";
 import OrderPayments from "../Payments";
 import { useRoadmap } from "@/context/roadmap";
 import { useNotifications } from "@/context/notification";
-import { refresh } from "@react-native-community/netinfo";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 const Tab = createBottomTabNavigator();
 
 export default function OrderDetailsScreen() {
   const theme = useTheme();
   const route = useRoute();
+  const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const params = route.params as { [key: string]: string | number };
   const { showSnackbar } = useNotifications();
   const { setLoading } = useLoading();
@@ -131,7 +133,7 @@ export default function OrderDetailsScreen() {
               />
             )}
           </Tab.Screen>
-          <Tab.Screen
+          {!isOffline && <Tab.Screen
             name="OrderMapView"
             options={{
               tabBarLabel: "Ver Mapa",
@@ -157,7 +159,7 @@ export default function OrderDetailsScreen() {
                 closeModal={() => setIsOpenMap(false)}
               />
             )}
-          </Tab.Screen>
+          </Tab.Screen>}
           <Tab.Screen
             name="OrderPayments"
             options={{

@@ -19,17 +19,16 @@ import { useNotifications } from "@/context/notification";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import OrderInvalidateSheet from "@/components/OrderInvalidate";
-import { closeOrderReturn, getReturnById } from "@/api/orderReturns";
 import { useRoadmap } from "@/context/roadmap";
 import { useLoading } from "@/context/loading.utils";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 function ReturnDetailsScreen() {
   const route = useRoute();
   const params = route.params as { [key: string]: string | number };
-  const { order } = useRoadmap();
   const { setLoading }= useLoading();
-
-  const { refresh, roadmap, orders } = useRoadmap();
+  const { getReturnById, closeReturn } = useExpoSQLiteOperations()
+  const { refresh, roadmap, orders, order } = useRoadmap();
   const { showSnackbar } = useNotifications();
   const [formState, setFormState] = React.useState({
     Productos: "",
@@ -40,7 +39,7 @@ function ReturnDetailsScreen() {
   const getReturn = async () => {
     try {
       setLoading(true);
-      const returnData = await getReturnById(params.id as string);
+      const returnData = await getReturnById(params.ReturnId ?? params.id as string);
       const currentOrder = orders?.find((item) => String(item.Id) === String(params.PedidoId));
         let payload = {...returnData };
       if (currentOrder?.Devoluciones?.length > 0) {
@@ -57,6 +56,7 @@ function ReturnDetailsScreen() {
       }
       setFormState(payload);
     } catch (error) {
+      console.error("Error getting return:", error);
       showSnackbar(
         "Error al cargar la devolución, intente nuevamente.",
         "error"
@@ -114,11 +114,10 @@ function ReturnDetailsScreen() {
       }
       const payload = {
         ...formState,
-        id: formState?.Id,
+        id: formState?.Id || formState?.id,
         descripcion: formState.Observaciones,
       };
-
-      await closeOrderReturn(payload);
+      await closeReturn(formState?.ReturnId || formState?.id, formState.Observaciones);
       await refresh();
       showSnackbar("Devolución actualizada exitosamente.", "success");
 
@@ -143,7 +142,7 @@ function ReturnDetailsScreen() {
             title={
               <View>
                 <Text variant="titleMedium">Detalle de la Devolución:</Text>
-                <Text>{order?.PedidoId}</Text>
+                <Text>{order?.PedidoId || formState?.NumeroPedido}</Text>
               </View>
             }
           />

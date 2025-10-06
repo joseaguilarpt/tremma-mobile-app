@@ -1,10 +1,11 @@
-import { postPayment, putPaymentById } from "@/api/payments";
 import DisplayList from "@/components/DisplayList";
 import { ReusableTable } from "@/components/Table";
 import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
 import { useRoadmap } from "@/context/roadmap";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
+import { RootState } from "@/store";
 import { formatMoney } from "@/utils/money";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
@@ -16,6 +17,7 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Button, Text, TextInput } from "react-native-paper";
+import { useSelector } from "react-redux";
 
 const columns = [
   { key: "name", title: "Método" },
@@ -31,7 +33,8 @@ export function CreditPayments() {
   const [comments, setComments] = useState("");
   const navigator = useNavigation();
   const { showSnackbar } = useNotifications();
-
+  const { markOrderAsCompleted, createPayment, updatePayment } = useExpoSQLiteOperations();
+  const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const data = [
     {
       label: "Monto de la factura",
@@ -81,14 +84,18 @@ export function CreditPayments() {
         },
       };
 
-      let api = postPayment;
+      let api = createPayment;
       if (currentPayment) {
-        api = putPaymentById;
+        api = updatePayment;
       }
 
       await api(payload);
       showSnackbar("Pago actualizado exitosamente.", "success");
+      if (isOffline) {
+        await markOrderAsCompleted(roadmap.id, order);
+      } 
       await refresh();
+      
       navigator.reset({
         index: 0,
         routes: [{ name: "OnGoingOrders", params: { id: roadmap.id } }],

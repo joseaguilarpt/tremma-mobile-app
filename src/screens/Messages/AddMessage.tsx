@@ -15,11 +15,6 @@ import {
   TextInput,
   Title,
 } from "react-native-paper";
-import {
-  deleteConfirmCommunication,
-  getCommunicationById,
-  postUserMessage,
-} from "@/api/communication";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import UserSelect from "@/components/UserSelect";
 import { useAuth } from "@/context/auth";
@@ -32,6 +27,7 @@ import { dayCR } from "@/utils/dates";
 import { parseErrors } from "@/utils/errors";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 export default function AddMessage() {
   const route = useRoute();
@@ -58,10 +54,10 @@ export default function AddMessage() {
   });
 
   const { receiver, message, subject } = formState;
-  const { showSnackbar, getMessages } = useNotifications();
+  const { showSnackbar } = useNotifications();
   const { setLoading, isLoading } = useLoading();
   const { user } = useAuth();
-
+  const { deleteConfirmCommunication, getMessages, getMessageById, createMessage } = useExpoSQLiteOperations();
   const handleInputChange = (field: keyof Message, value: string) => {
     setFormState((prev) => ({
       ...prev,
@@ -72,7 +68,7 @@ export default function AddMessage() {
   const handleGetData = async () => {
     setLoading(true);
     try {
-      const data = await getCommunicationById(id);
+      const data = await getMessageById(id);
       setReceivedMessage({
         ...data,
         sender: `${data.UserEnvia.Nombre} ${data.UserEnvia.Apellido1}`,
@@ -145,7 +141,7 @@ export default function AddMessage() {
           confirmado: false,
         };
 
-        await postUserMessage(payload);
+        await createMessage(payload);
         if (receivedMessage?.id) {
           await deleteConfirmCommunication(receivedMessage?.id);
         }

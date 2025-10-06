@@ -11,8 +11,8 @@ import { Keyboard, StyleSheet, View } from "react-native";
 import { useRoadmap } from "@/context/roadmap";
 import { useKeyboardListener } from "@/hooks/useKeyboardListener";
 import { useNotifications } from "@/context/notification";
-import { rejectOrderAssignment } from "@/api/orders";
 import { useLoading } from "@/context/loading.utils";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -32,7 +32,7 @@ export default function OrderInvalidateSheet({
   const [error, setError] = useState(false);
   const [motivo, setMotivo] = useState("");
   const { keyboardVisible } = useKeyboardListener();
-
+  const { markOrderAsNotLoaded } = useExpoSQLiteOperations();
   const snapPoints = useMemo(
     () => [keyboardVisible ? "75%" : "40%"],
     [keyboardVisible]
@@ -52,10 +52,9 @@ export default function OrderInvalidateSheet({
         return;
       }
       setLoading(true);
-      await rejectOrderAssignment({
+      await markOrderAsNotLoaded(roadmap.Id, {
         motivo,
-        Id: roadmap.Id,
-        orders: [selectedOrder.Id],
+        id: selectedOrder.Id,
       });
       await refresh();
       handleClose();

@@ -19,7 +19,7 @@ import {
   Divider,
 } from "react-native-paper";
 import { useDebounce } from "../utils"; // Usa tu debounce
-import { getUsersList } from "../api/users"; // Tu función de búsqueda
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 const UserSelect = ({ onChange, name, disabled, error, helperText, label }) => {
   const [inputValue, setInputValue] = useState("");
@@ -27,12 +27,13 @@ const UserSelect = ({ onChange, name, disabled, error, helperText, label }) => {
   const [users, setUsers] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const debouncedFilterValue = useDebounce(inputValue, 500);
+  const { getUsers } = useExpoSQLiteOperations();
   const isSelection = useRef(false);
   const theme = useTheme();
   const searchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const { Items = [] } = await getUsersList({ Descripcion: inputValue });
+      const { Items = [] } = await getUsers({ Descripcion: inputValue });
       setUsers(Items);
       setShowDropdown(true);
     } catch {

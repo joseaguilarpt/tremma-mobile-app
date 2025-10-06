@@ -107,4 +107,4 @@ export const API_URL = `${BASE_URL}/api/api`;
 export const TREMMA_REPORT_URL = `${BASE_URL}/rpt/reports`;
 
 
-export const MAPS_ALSA = "AIzaSyC2cb41K1S34LUGBC_ZbNcHSBCl0E4lzyA"
+export const MAPS_ALSA = "AIzaSyCiObrTcNIZDpkxvl6FG4an2AdAQiIoIwg"

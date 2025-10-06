@@ -6,11 +6,10 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { StyleSheet, View } from "react-native";
-import { formatMoney } from "@/utils/money";
-import { deletePaymentById } from "@/api/payments";
 import { useNotifications } from "@/context/notification";
 import { useLoading } from "@/context/loading.utils";
 import { useRoadmap } from "@/context/roadmap";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -27,12 +26,12 @@ export default function RemovePaymentSheet({
   const { showSnackbar } = useNotifications();
   const { setLoading, isLoading } = useLoading();
   const { refresh, fetchPayments } = useRoadmap();
-
+const { deletePayment } = useExpoSQLiteOperations();
   const handleRemove = async () => {
     try {
       setLoading(true);
 
-      await deletePaymentById({ id: payment.Id });
+      await deletePayment({ id: payment.Id });
       showSnackbar("Pago eliminado exitosamente.", "success");
       await refresh();
       await fetchPayments(payment.PedidoId);
@@ -75,7 +74,7 @@ export default function RemovePaymentSheet({
           <Text style={{ margin: 16 }}>
             ¿Desea remover el pago por{" "}
             {payment?.Monto
-              ? formatMoney(payment?.Monto)
+              ? payment?.Monto
               : "-"}{" "}
             de la lista?
           </Text>

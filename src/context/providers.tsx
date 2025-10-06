@@ -99,16 +99,6 @@ function AppProviders({ children }: { children: ReactNode }) {
                     <SnackbarProvider>
                       <RoadmapProvider>
                         {children}
-                        {!isConnected && (
-                          <Banner style={styles.banner} visible={true}>
-                            <Text
-                              variant="labelSmall"
-                              style={styles.bannerMessage}
-                            >
-                              Sin conexion a internet
-                            </Text>
-                          </Banner>
-                        )}
                         <ConnectPush />
                       </RoadmapProvider>
                     </SnackbarProvider>

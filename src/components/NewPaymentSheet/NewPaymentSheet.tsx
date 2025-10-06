@@ -10,10 +10,9 @@ import { StyleSheet, View } from "react-native";
 import { useNotifications } from "@/context/notification";
 import { useRoadmap } from "@/context/roadmap";
 import { useKeyboardListener } from "@/hooks/useKeyboardListener";
-import { postFile } from "@/api/files";
 import { useAuth } from "@/context/auth";
 import { useLoading } from "@/context/loading.utils";
-import { postPayment, putPaymentById } from "@/api/payments";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 type OrderMenuProps = {
   closeSheet: () => void;
@@ -70,6 +69,8 @@ export default function NewPaymentSheet({
     setErrors({});
   };
 
+  const { createPayment, updatePayment , postImage } = useExpoSQLiteOperations();
+
   const handleSave = async () => {
     try {
       let err = {};
@@ -96,7 +97,7 @@ export default function NewPaymentSheet({
       setLoading(true);
       let imageId = "";
       if (formState.Comprobante) {
-        imageId = await postFile(formState.Comprobante, "comprobantesdata");
+        imageId = await postImage(formState.Comprobante, "comprobantesdata");
       }
       const currentPayment = payments.find(
         (item) => item.pedidoId === order.Id
@@ -120,9 +121,10 @@ export default function NewPaymentSheet({
           descripcion: currentMethod?.Descripcion,
         };
       }
-      let api = postPayment;
+
+      let api = createPayment;
       if (currentPayment) {
-        api = putPaymentById;
+        api = updatePayment;
       }
 
       await api(payload);

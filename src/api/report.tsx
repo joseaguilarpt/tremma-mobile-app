@@ -13,7 +13,6 @@ export const getReportPDF = async (reportname, payload) => {
     });
     return response.data;
   } catch (e) {
-    console.log(JSON.stringify(e, null, 2))
     throw e;
   }
 };

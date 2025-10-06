@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import {
   CommonActions,
   useNavigation,
@@ -14,9 +14,7 @@ import Roadmap from "../Roadmap";
 import Orders from "../Orders";
 import { useNotifications } from "@/context/notification";
 import { useRoadmap } from "@/context/roadmap";
-import { startRoadmap } from "@/api/orders";
 import { useLoading } from "@/context/loading.utils";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import OnGoingScreen from "../OnGoingScreen";
 
 const Tab = createBottomTabNavigator();
@@ -30,37 +28,18 @@ export default function RoadmapView() {
   const params = route.params as { id: string };
   const { showSnackbar } = useNotifications();
   const { setLoading } = useLoading();
-  const { orders, roadmap, refresh } = useRoadmap();
-
-  const storeActiveRoadmap = async () => {
-    try {
-      await AsyncStorage.setItem("active-roadmap", String(roadmap.Id));
-    } catch (error) {
-      console.error("Error loading active order:", error);
-    }
-  };
+  const { roadmap, refresh, onStartRoadmap } = useRoadmap();
 
   const handleStartRoadmap = async () => {
-    const hasMissing = (orders ?? []).some((item) => item.Estado !== "Cargado");
     try {
-      if (hasMissing) {
-        showSnackbar(
-          "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-          "error"
-        );
-        return;
-      }
-      setLoading(true);
-      await startRoadmap({ Id: roadmap.Id });
-      await storeActiveRoadmap();
+      await onStartRoadmap();
       navigate.navigate("OnGoingOrders", { id: roadmap.Id });
     } catch (error) {
+
       showSnackbar(
-        "Error al inciar la Hoja de Ruta, por favor intente nuevamente.",
+        error?.message || "Error al inciar la Hoja de Ruta, por favor intente nuevamente.",
         "error"
       );
-    } finally {
-      setLoading(false);
     }
   };
 

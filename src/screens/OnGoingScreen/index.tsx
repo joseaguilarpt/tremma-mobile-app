@@ -14,11 +14,13 @@ import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
 import { useNotifications } from "@/context/notification";
 import OnGoingOrders from "../OnGoingOrders";
 import OnGoingRoadmap from "../OnGoingRoadmap";
-import { putMoveOrdersInSameRoadmap } from "@/api/orders";
 import { useLoading } from "@/context/loading.utils";
 import OrdersMap from "@/components/Map/Map";
 import { Order } from "@/types/Roadmap";
 import { useRoadmap } from "@/context/roadmap";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 const Tab = createBottomTabNavigator();
 
@@ -32,6 +34,8 @@ export default function OnGoingScreen() {
   const { orders, roadmap, refresh, setOrders } = useRoadmap();
   const [isOpenMap, setIsOpenMap] = React.useState(false);
 
+  const { moveOrdersInSameRoadmap } = useExpoSQLiteOperations();
+  const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const handleCheckOrders = useCallback(() => {
     if (orders.length === 0) {
       navigator.navigate("CloseRoadmap", {
@@ -58,9 +62,8 @@ export default function OnGoingScreen() {
     setOrders(data);
     setLoading(true);
     try {
-      await putMoveOrdersInSameRoadmap({
-        hojaRutaId: roadmap?.Id,
-        pedidoId: current.Id,
+      await moveOrdersInSameRoadmap(roadmap?.Id, {
+        id: current.Id,
         secuencia: Secuencia ?? 1,
       });
       await refresh();
@@ -140,7 +143,7 @@ export default function OnGoingScreen() {
               />
             )}
           </Tab.Screen>
-          <Tab.Screen
+          {!isOffline && <Tab.Screen
             name="MapView"
             options={{
               tabBarLabel: "Ver Mapa",
@@ -166,7 +169,7 @@ export default function OnGoingScreen() {
                 closeModal={() => setIsOpenMap(false)}
               />
             )}
-          </Tab.Screen>
+          </Tab.Screen>}
           <Tab.Screen
             name="DetalleHoja"
             options={{

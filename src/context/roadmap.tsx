@@ -1,14 +1,14 @@
 import * as React from "react";
 import { useLoading } from "./loading.utils";
-import { getCurrentRoadmap, getOrderById } from "@/api/orders";
 import { useNotifications } from "./notification";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Order, Roadmap } from "@/types/Roadmap";
-import { getClientById } from "@/api/clients";
-import { getPaymentMethodList } from "@/api/paymentMethods";
 import uuid from "react-native-uuid";
-import { getPaymentListByOrderId } from "@/api/payments";
 import { useAuth } from "./auth";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { expoSQLiteService } from "@/database/expoSQLiteService";
 
 const RoadmapContext = React.createContext(null);
 
@@ -17,6 +17,13 @@ export const RoadmapProvider = ({ children }) => {
   const [roadmap, setRoadmap] = React.useState<Roadmap | any>(null);
   const [order, setOrder] = React.useState<Order | any>({});
   const [paymentMethods, setPaymentMethods] = React.useState([]);
+  const [clientIdsList, setClientIdsList] = React.useState([]);
+  const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
+
+  const { getRoadmap, createReturns, recreateTables, getUsers, getOrders, startRoadmap, getPayments, getPaymentMethods, getOrderById, postClientsList, getClientById, getPaymentConditions } = useExpoSQLiteOperations()
+  //  AsyncStorage.removeItem("loaded-orders")
+  //   AsyncStorage.removeItem("active-roadmap")
+  //   recreateTables()
   const [payments, setPayments] = React.useState([]);
   const [blockedOrders, setBlockedOrders] = React.useState([]);
   const { setLoading } = useLoading();
@@ -52,15 +59,18 @@ export const RoadmapProvider = ({ children }) => {
 
   const fetchData = async () => {
     try {
-      const response = await getCurrentRoadmap();
+
+      const response = await getRoadmap();
+      const clientIds = new Set();
       setRoadmap(response);
       const alreadyLoaded = await getStorageOrders();
       const currentLoadedOrders = alreadyLoaded[response.Id];
       const ordersWithReturns = [];
       (response?.Pedidos ?? [])
-        .filter((item) => !item.Bloqueado)
+        .filter((item) => !item.Bloqueado && item.Estado !== "No Cargado" && !item.Completado)
         .forEach((item) => {
           let newOrder = { ...item, key: item.Id };
+          clientIds.add(item.CodigoCliente);
           if (currentLoadedOrders) {
             const orderIsLoaded = (currentLoadedOrders ?? []).find(
               (v) => String(v) === String(item.Id)
@@ -80,6 +90,23 @@ export const RoadmapProvider = ({ children }) => {
         (response?.Pedidos ?? []).filter((item) => item.Bloqueado)
       );
 
+      setClientIdsList(new Array(...clientIds));
+      const returns = ordersWithReturns.flatMap((item) => item.Devoluciones);
+      if (returns.length > 0) {
+        try {
+          await createReturns(returns);
+        } catch (error) {
+          console.error("Error creating returns:", error);
+        }
+      }
+
+      try {
+        for (const order of ordersWithReturns) {
+          await getPayments(order.Id);
+        }
+      } catch (error) {
+        console.error("Error getting payments:", error);
+      }
       setOrders(ordersWithReturns);
       return {
         orders: ordersWithReturns,
@@ -99,32 +126,62 @@ export const RoadmapProvider = ({ children }) => {
     }
   };
 
+  const fetchClients = async () => {
+    try {
+      if (!isOffline) {
+        const promises = clientIdsList.map(async (clientId) => {
+          const client = await getClientById(clientId as string);
+          return client;
+        });
+        const clients = [];
+        for (const clientPromise of promises) {
+          const client = await clientPromise;
+          clients.push(client);
+        }
+        await postClientsList(clients);
+      }
+    } catch (error) {
+      console.error("Error posting clients list:", error);
+    }
+  }
+
   const getListData = async () => {
     try {
-      const methods = await getPaymentMethodList();
+      const methods = await getPaymentMethods();
+      await getPaymentConditions();
+      await getUsers({ Descripcion: "" })
       setPaymentMethods(methods);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const fetchPayments = async (id: string) => {
     try {
-      const response = await getPaymentListByOrderId(id);
+      const response = await getPayments(id);
       setPayments(response);
-    } catch (error) {}
+    } catch (error) { }
   };
+
   const fetchOrder = async (id: string) => {
     try {
       const currentOrder =
         (orders ?? []).find((item) => String(item.Id) === String(id)) ?? {};
       const response = await getOrderById(id);
       const client = await getClientById(response?.Cliente?.Codigo);
-      setOrder({
+      const payload = {
         ...currentOrder,
         ...response,
         Cliente: client,
-      });
+      }
+      if (isOffline) {
+        const paymentConditions = await getPaymentConditions();
+        if (paymentConditions.length > 0) {
+          payload.CondicionPago = paymentConditions.find((item) => item.Descripcion === response.CondicionPago.Descripcion);
+        }
+      }
+      setOrder(payload);
       fetchPayments(id);
     } catch (error) {
+      console.error("Error fetching order:", error);
       showSnackbar(
         "Error al carga el Pedido, por favor intente nuevamente",
         "error"
@@ -132,19 +189,58 @@ export const RoadmapProvider = ({ children }) => {
     }
   };
 
+
+
+  const storeActiveRoadmap = async () => {
+    try {
+      await AsyncStorage.setItem("active-roadmap", String(roadmap.Id));
+    } catch (error) {
+      console.error("Error loading active order:", error);
+    }
+  };
+
+  const onStartRoadmap = async () => {
+    const hasMissing = (orders ?? []).some((item) => item.Estado !== "Cargado");
+    try {
+      if (hasMissing) {
+        showSnackbar(
+          "Para continuar, asegúrate de que todos los pedidos estén marcados.",
+          "error"
+        );
+        throw new Error("Para continuar, asegúrate de que todos los pedidos estén marcados.");
+      }
+      setLoading(true);
+      await startRoadmap(roadmap.Id as string);
+      await storeActiveRoadmap();
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   React.useEffect(() => {
-    if (user?.id) {
+    if (clientIdsList.length > 0) {
+      fetchClients();
+    }
+  }, [clientIdsList]);
+
+  React.useEffect(() => {
+    if (user?.id && !roadmap) {
       fetchData();
       getListData();
     }
+
+    // Solo ejecutar el intervalo si no hay roadmap cargado Y no hay operaciones en curso
     const interval = setInterval(() => {
       console.log("Fetching roadmap data...");
-      if (user?.id) {
+      if (user?.id && !roadmap) {
         fetchData();
       }
-    }, 20 * 1000); // 20 seconds
+    }, 30 * 1000); // Aumentar a 30 segundos para reducir frecuencia
+
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [user?.id, roadmap]); // Agregar roadmap como dependencia
 
   const data = React.useMemo(
     () => ({
@@ -163,6 +259,7 @@ export const RoadmapProvider = ({ children }) => {
       addPayment: handleSavePayment,
       getStorageOrders,
       fetchPayments,
+      onStartRoadmap,
     }),
     [
       roadmap,
@@ -174,6 +271,7 @@ export const RoadmapProvider = ({ children }) => {
       fetchOrder,
       fetchData,
       setOrder,
+      onStartRoadmap,
     ]
   );
   return (

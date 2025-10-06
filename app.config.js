@@ -44,6 +44,7 @@ export default ({ config }) => ({
       "expo-router",
       "expo-splash-screen",
       "expo-background-task",
+      "expo-web-browser",
       [
         "expo-font",
         {

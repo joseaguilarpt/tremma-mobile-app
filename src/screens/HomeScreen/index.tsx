@@ -8,7 +8,6 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import SettingsScreen from "../Settings";
 import Dashboard from "@/components/Dashboard";
 import ProtectedRoute from "@/components/ProtectedRoute/ProtectedRoute";
-import Roadmaps from "../Roadmaps";
 
 const Tab = createBottomTabNavigator();
 

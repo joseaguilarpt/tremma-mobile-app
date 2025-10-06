@@ -5,6 +5,8 @@ import { ReusableTable } from "@/components/Table";
 import { useLoading } from "@/context/loading.utils";
 import { useNotifications } from "@/context/notification";
 import { useRoadmap } from "@/context/roadmap";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
+import { RootState } from "@/store";
 import { formatMoney } from "@/utils/money";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useNavigation } from "@react-navigation/native";
@@ -18,6 +20,7 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import { Button, Text, TextInput } from "react-native-paper";
+import { useSelector } from "react-redux";
 
 const columns = [
   { key: "MetodoDePago", title: "Método" },
@@ -28,6 +31,8 @@ const columns = [
 export function CashPayments() {
   const { order, roadmap, refresh, payments } =
     useRoadmap();
+  const { markOrderAsCompleted } = useExpoSQLiteOperations();
+  const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const { setLoading, isLoading } = useLoading();
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState({});
@@ -82,6 +87,9 @@ export function CashPayments() {
       return;
     }
     try {
+      if (isOffline) {
+        await markOrderAsCompleted(roadmap.id, order);
+      }
       await refresh();
       navigator.reset({
         index: 0,

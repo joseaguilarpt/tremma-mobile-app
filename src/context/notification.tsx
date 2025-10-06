@@ -8,10 +8,10 @@ import React, {
 import { StyleSheet } from "react-native";
 import { Snackbar, Banner, Text } from "react-native-paper";
 import dayjs from "dayjs";
-import { getCommunications } from "../api/communication";
 import { useAuth } from "./auth";
 import { NotificationContext } from "./notification.utils";
 import { dayCR } from "@/utils/dates";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 
 // Create NotificationContext
 
@@ -22,7 +22,7 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-
+  const { getMessages } = useExpoSQLiteOperations()
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
@@ -37,9 +37,10 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
   // Fetch messages for the user
   const checkMessages = async () => {
     try {
-      const response = await getCommunications({ userId: user?.id });
+      const response = await getMessages(user?.id);
       const messagesList = response.filter(item => {
         if (!item.Fecha) return false;
+        if (item.Estado === "Confirmado") return false;
         const limitDate = dayCR().subtract(5, "days")
         return dayCR(item.Fecha).isAfter(limitDate)
       }).map((item) => ({

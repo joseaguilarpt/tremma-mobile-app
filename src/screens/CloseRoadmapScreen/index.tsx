@@ -23,6 +23,13 @@ import { getReportPDF } from "@/api/report";
 import { useAuth } from "@/context/auth";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import expoSQLiteService from "@/database/expoSQLiteService";
+
+type Nullable<T> = T | null;
 
 function filterNullValues<T extends object>(obj: Nullable<T>): T {
   // Check if the value is an object and not an array
@@ -45,13 +52,22 @@ function CloseRoadmap({ id }: { id: string }) {
   const { user } = useAuth();
   const params = route.params as { [key: string]: string | number };
   const { setLoading, isLoading } = useLoading();
-  const { roadmap, refresh } = useRoadmap();
-  const [errors, setErrors] = React.useState({});
+  const { roadmap, refresh, orders } = useRoadmap();
+  const [errors, setErrors] = React.useState<{[key: string]: string | null}>({});
   const { showSnackbar } = useNotifications();
-  const [formState, setFormState] = React.useState({
+  const { recreateTables } = useExpoSQLiteOperations();
+  const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
+  const [formState, setFormState] = React.useState<{
+    Efectivo: string;
+    Observaciones: string;
+    Referencia: string;
+    Comprobante?: any;
+    ComprobanteLocal?: boolean;
+  }>({
     Efectivo: "",
     Observaciones: "",
     Referencia: "",
+    ComprobanteLocal: false,
   });
 
   useEffect(() => {
@@ -62,9 +78,10 @@ function CloseRoadmap({ id }: { id: string }) {
           metodoPagoId: 1,
         });
         setFormState((prev) => ({ ...prev, Efectivo: resp || 0 }));
-      } catch (error) {}
+      } catch (error) { }
     };
     fetchCashPayments();
+    getLocal();
   }, []);
 
   const data = [
@@ -139,24 +156,81 @@ function CloseRoadmap({ id }: { id: string }) {
     }
   };
 
+  const saveLocal = async () => {
+    const payload: any = { RoadmapId: roadmap?.Id, Efectivo: formState.Efectivo, Observaciones: formState.Observaciones, Referencia: formState.Referencia }
+    if (formState.Comprobante && !formState.ComprobanteLocal) {
+      const imageId = await expoSQLiteService.createImage({ ...formState.Comprobante, containerName: "comprobantesdata" });
+      payload.Comprobante = imageId;
+      payload.ComprobanteLocal = true
+    }
+    await AsyncStorage.setItem("closeRoadmapFormState", JSON.stringify(payload));
+  }
+
+
+  const getLocal = async () => {
+    const payload = await AsyncStorage.getItem("closeRoadmapFormState");
+    if (payload) {
+      const data = JSON.parse(payload);
+      if (data.Comprobante) {
+        try {
+          const image = await expoSQLiteService.getImageById(data.Comprobante);
+          
+          // Validate that image exists and has required data
+          if (image && image.image_data && image.image_type && image.image_name) {
+            // Additional validation: check if image_data looks like valid base64
+            const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+            if (base64Regex.test(image.image_data)) {
+              data.Comprobante = {
+                "mimeType": image.image_type, 
+                "name": image.image_name, 
+                "size": image.image_size, 
+                // image.image_data es un base64
+                "uri": `data:${image.image_type};base64,${image.image_data}`
+              }
+            } else {
+              console.warn("Image data is not valid base64:", image.image_data?.substring(0, 50) + "...");
+              // Remove the comprobante if data is invalid
+              delete data.Comprobante;
+            }
+          } else {
+            console.warn("Image data is incomplete or missing:", image);
+            // Remove the comprobante if data is invalid
+            delete data.Comprobante;
+          }
+        } catch (error) {
+          console.error("Error retrieving image from database:", error);
+          // Remove the comprobante if there's an error
+          delete data.Comprobante;
+        }
+      }
+      setFormState(data);
+    }
+  }
+
+
   const handleSave = async () => {
     try {
       const { blockedOrders } = await refresh();
-      if (!formState.Comprobante && formState.Efectivo > 0) {
+      if (isOffline) {
+        await saveLocal()
+        showSnackbar("No se puede ejectuar el cierre porque no estás conectado a internet.", "error");
+        return;
+      }
+      if (!formState.Comprobante && Number(formState.Efectivo) > 0) {
         showSnackbar("Por favor adjunte un archivo comprobante.", "error");
         return;
       }
-      let err = {};
+      let err: {[key: string]: string} = {};
 
       if (!formState.Observaciones) {
         err.Observaciones = "El campo Observaciones es requerido.";
       }
 
-      if (!formState.Referencia && formState.Efectivo > 0) {
+      if (!formState.Referencia && Number(formState.Efectivo) > 0) {
         err.Referencia = "El campo Comprobante es requerido.";
       }
 
-      if (!formState.Comprobante && formState.Efectivo > 0) {
+      if (!formState.Comprobante && Number(formState.Efectivo) > 0) {
         err.Comprobante = "Por favor, adjunte un comprobante para continuar.";
       }
 
@@ -182,7 +256,8 @@ function CloseRoadmap({ id }: { id: string }) {
         imageId = await postFile(formState.Comprobante, "comprobantesdata");
       }
 
-      const payload = filterNullValues({
+
+      const payload: any = filterNullValues({
         comprobante: formState?.Referencia ? formState?.Referencia : null,
         hojaRutaId: roadmap?.Id,
         observaciones: formState?.Observaciones
@@ -200,12 +275,20 @@ function CloseRoadmap({ id }: { id: string }) {
       await finishRoadmap(payload);
       showSnackbar("Hoja de Ruta cerrada exitosamente.", "success");
       await refresh();
-      navigator.navigate("Home");
+      if (!isOffline) {
+        await AsyncStorage.removeItem("loaded-orders")
+        await AsyncStorage.removeItem("closeRoadmapFormState")
+        await AsyncStorage.removeItem("active-roadmap")
+        await recreateTables()
+      }
+      (navigator as any).navigate("Home");
     } catch (error) {
+      await saveLocal()
+
       console.error("Error closing roadmap:", error);
       showSnackbar(
         error?.response?.data?.errors?.Messages?.[0] ||
-          "Error al cerrar la hoja de Ruta, intente nuevamente.",
+        "Error al cerrar la hoja de Ruta, intente nuevamente.",
         "error"
       );
     } finally {
@@ -240,7 +323,7 @@ function CloseRoadmap({ id }: { id: string }) {
             <Appbar.Header>
               <Appbar.BackAction
                 onPress={() => {
-                  navigator.navigate("Home");
+                  (navigator as any).navigate("Home");
                 }}
               />
               <Appbar.Content
@@ -251,23 +334,13 @@ function CloseRoadmap({ id }: { id: string }) {
                   </View>
                 }
               />
-              <Appbar.Action
+              {!isOffline && <Appbar.Action
                 icon="file-export-outline"
-                onPress={() => {
-                  showSnackbar(
-                    "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-                    "error"
-                  );
-                }}
-              />
+                onPress={handleGeneratePDF}
+              />}
               <Appbar.Action
                 icon="send"
-                onPress={() => {
-                  showSnackbar(
-                    "Para continuar, asegúrate de que todos los pedidos estén marcados.",
-                    "error"
-                  );
-                }}
+                onPress={handleSave}
               />
             </Appbar.Header>
             <View style={styles.container}>
@@ -303,7 +376,7 @@ function CloseRoadmap({ id }: { id: string }) {
                   }}
                 >
                   <Text style={{ color: "#aaaaaa" }} variant="bodyLarge">
-                    {formatMoney(formState?.Efectivo)}
+                    {formatMoney(Number(formState?.Efectivo) || 0)}
                   </Text>
                 </View>
               </View>
@@ -324,7 +397,7 @@ function CloseRoadmap({ id }: { id: string }) {
                   {formState.Comprobante && (
                     <Text style={{ margin: "auto" }}>
                       Archivo: {formState.Comprobante.name} (
-                      {Math.round(formState.Comprobante.size! / 1024)} KB)
+                      {Math.round(Number(formState.Comprobante.size) / 1024)} KB)
                     </Text>
                   )}
                 </View>
@@ -332,11 +405,10 @@ function CloseRoadmap({ id }: { id: string }) {
                   <TextInput
                     mode="outlined"
                     label={
-                      formState.Efectivo > 0
+                      Number(formState.Efectivo) > 0
                         ? "Referencia Comprobante *"
                         : "Referencia Comprobante"
                     }
-                    required={true}
                     value={formState?.Referencia}
                     error={!!errors.Referencia}
                     onChangeText={(value) =>
@@ -346,7 +418,7 @@ function CloseRoadmap({ id }: { id: string }) {
                 </View>
               </View>
               <View style={styles.card}>
-                <Button
+                {!isOffline && <Button
                   icon="file-export-outline"
                   mode="outlined"
                   textColor="white"
@@ -354,7 +426,7 @@ function CloseRoadmap({ id }: { id: string }) {
                   onPress={handleGeneratePDF}
                 >
                   Informe de Hoja
-                </Button>
+                </Button>}
                 <Button
                   icon="send"
                   style={{ marginLeft: 16 }}

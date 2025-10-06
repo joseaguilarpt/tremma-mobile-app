@@ -61,15 +61,6 @@ export const postOrder = async (payload) => {
   }
 };
 
-export const deleteOrderById = async (id: string) => {
-  try {
-    await api.delete(`/pedidos/state/${id}`);
-    return true;
-  } catch (e) {
-    throw e;
-  }
-};
-
 export const getDistrictOrder = async (id: string) => {
   try {
     const response = await api.get(`/pedidos/${id}/distrito`);
