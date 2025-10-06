@@ -21,6 +21,38 @@ class ExpoSQLiteService {
     }
   }
 
+  // Verificar si las tablas están inicializadas
+  public async areTablesInitialized(): Promise<boolean> {
+    if (!this.db) return false;
+    
+    try {
+      // Verificar si existe la tabla sync_queue (que es una de las últimas en crearse)
+      const result = await this.db.getFirstAsync(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='sync_queue'"
+      );
+      return !!result;
+    } catch (error) {
+      console.error('❌ Error verificando inicialización de tablas:', error);
+      return false;
+    }
+  }
+
+  // Esperar a que las tablas estén inicializadas
+  public async waitForTablesInitialization(maxWaitTime: number = 10000): Promise<boolean> {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < maxWaitTime) {
+      if (await this.areTablesInitialized()) {
+        return true;
+      }
+      // Esperar 100ms antes de verificar nuevamente
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.warn('⚠️ Timeout esperando inicialización de tablas');
+    return false;
+  }
+
   private async createTables() {
     if (!this.db) return;
     // Tabla de órdenes
@@ -1400,7 +1432,6 @@ class ExpoSQLiteService {
     }
 
     const result = await this.db.getAllAsync('SELECT * FROM returns WHERE pedido_id = ? ORDER BY created_at DESC', [id]);
-    console.log("result", JSON.stringify(result, null, 2));
     return result.map((row: any) => ({
       Id: row.id,
       PedidoId: row.pedido_id,

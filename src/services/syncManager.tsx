@@ -19,6 +19,13 @@ class SyncManager {
   private lastSyncTimes: { [key: string]: number } = {};
   // Sincronizar todos los datos
   public async syncAllData(): Promise<void> {
+    // Verificar que las tablas estén inicializadas
+    const tablesReady = await expoSQLiteService.areTablesInitialized();
+    if (!tablesReady) {
+      console.warn('⚠️ Tablas no inicializadas, saltando sincronización');
+      return;
+    }
+    
     const syncQueue = await expoSQLiteService.getSyncQueue();
     for (const item of syncQueue) {
       await this.processSyncItem(item);
@@ -61,6 +68,7 @@ class SyncManager {
   private async processOrderOperation(operation: string, data: any, queueId: string): Promise<void> {
     switch (operation) {
       case "MARK_ORDER_AS_COMPLETED":
+        await expoSQLiteService.updateOrder(data.id || data.Id, { completado: true, is_synced: 1 }, "MARK_ORDER_AS_COMPLETED");
         await this.updateSyncQueue(queueId);
         break;
       case "MARK_ORDER_AS_LOADED":
@@ -109,7 +117,7 @@ class SyncManager {
     switch (operation) {
       case "CREATE_PAYMENT":
         try {
-          const payload = {
+          const payload: any = {
             "metodoPago": { "descripcion": data.metodo_pago_descripcion, "id": data.metodo_pago_id },
             "monto": data.monto,
             "observaciones": data.observaciones,
@@ -134,7 +142,6 @@ class SyncManager {
             };
             
             const imageId = await filesApi.postFile(fileObject, image.container_name);
-            console.log("Image uploaded successfully:", imageId);
             
             // Limpiar archivo temporal
             await FileSystem.deleteAsync(tempUri, { idempotent: true });
@@ -196,6 +203,14 @@ class SyncManager {
 
   // Sincronización manual
   public async syncNow(): Promise<void> {
+    // Verificar que las tablas estén inicializadas antes de sincronizar
+    const tablesReady = await expoSQLiteService.waitForTablesInitialization();
+    if (!tablesReady) {
+      console.error('❌ No se pueden sincronizar los datos: las tablas no están inicializadas');
+      throw new Error('Database tables not initialized');
+    }
+    
+    console.log('✅ Tablas inicializadas, procediendo con sincronización...');
     await this.syncAllData();
   }
 
@@ -209,10 +224,10 @@ class SyncManager {
     const syncQueue = await expoSQLiteService.getSyncQueue();
 
     return {
-      syncQueue: syncQueue,
       pending: syncQueue.filter(item => item.status === 'PENDING').length,
       failed: syncQueue.filter(item => item.status === 'FAILED').length,
       completed: syncQueue.filter(item => item.status === 'COMPLETED').length,
+      lastSync: null, // TODO: Implementar tracking de última sincronización
     };
   }
 

@@ -21,7 +21,7 @@ interface OfflineState {
 }
 
 const initialState: OfflineState = {
-  isOfflineMode: false,
+  isOfflineMode: true,
   pending: 0,
   offlineData: {
     orders: [],
@@ -39,7 +39,7 @@ const offlineSlice = createSlice({
   initialState,
   reducers: {
     setOfflineMode: (state, action: PayloadAction<boolean>) => {
-      state.isOfflineMode = action.payload;
+      state.isOfflineMode = true;
     },
     setPending: (state, action: PayloadAction<number>) => {
       state.pending = action.payload;
