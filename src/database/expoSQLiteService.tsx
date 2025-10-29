@@ -687,7 +687,7 @@ class ExpoSQLiteService {
     }));
 
     for (const order of orders) {
-      order.Devoluciones = await this.getReturns(order.Id);
+      order.Devoluciones = await this.getReturns(order?.Id);
     }
     
 

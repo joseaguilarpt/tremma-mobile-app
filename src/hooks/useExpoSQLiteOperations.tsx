@@ -48,7 +48,7 @@ export const useExpoSQLiteOperations = () => {
   }, [isOffline]);
 
   const markOrderAsCompleted = useCallback(async (roadmapId: string, payload: any) => {
-    await expoSQLiteService.updateOrder(payload.id || payload.Id, { roadmap_id: roadmapId, completado: true, is_synced: isOffline ? 0 : 1 }, "MARK_ORDER_AS_COMPLETED");
+    await expoSQLiteService.updateOrder(payload.id || payload.Id, { estado: "Completado", roadmap_id: roadmapId, completado: true, is_synced: isOffline ? 0 : 1 }, "MARK_ORDER_AS_COMPLETED");
   }, [isOffline]);
 
   const markOrderAsLoaded = useCallback(async (roadmapId: string, payload: any) => {
@@ -93,6 +93,20 @@ export const useExpoSQLiteOperations = () => {
     }
   }, [isOffline]);
 
+  const mergeOrders = (orders = [], dbOrders = []) => {
+    return orders.map((order) => {
+      const existent = dbOrders.find((item) => order?.Id === item?.Id || order?.Id === item?.id)
+      if (existent) {
+        return {
+          ...order,
+          Estado: existent.Estado || order.Estado
+        }
+      }
+      return existent;
+    }) 
+  }
+
+
   // Operaciones de Roadmaps
   const getRoadmap = useCallback(async () => {
     try {
@@ -100,6 +114,11 @@ export const useExpoSQLiteOperations = () => {
         return await expoSQLiteService.getRoadmapWithOrders();
       } else {
         const roadmapData = await ordersApi.getCurrentRoadmap();
+        if (roadmapData) {
+          const db =  await expoSQLiteService.getRoadmapWithOrders();
+          const mergedOrders = mergeOrders(roadmapData?.Pedidos || [], db?.Pedidos || [])
+          roadmapData.Pedidos = mergedOrders;
+        }
         await expoSQLiteService.processAndSaveRoadmap(roadmapData);
         return roadmapData;
       }

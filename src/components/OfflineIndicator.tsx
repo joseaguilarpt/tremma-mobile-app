@@ -5,16 +5,31 @@ import { RootState } from '../store';
 import { ActivityIndicator } from 'react-native-paper';
 import { useExpoSQLiteOperations } from '@/hooks/useExpoSQLiteOperations';
 import { setPending } from '@/store/slices/offlineSlice';
+import { useRoadmap } from '@/context/roadmap';
+import { useNavigation } from '@react-navigation/native';
 
 const OfflineIndicator: React.FC = () => {
   const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
+  const route = useNavigation();
   const pending = useSelector((state: RootState) => state.offline.pending);
-
+  const { refresh, getCashPayments } = useRoadmap()
   const dispatch = useDispatch();
   const { getSyncStats } = useExpoSQLiteOperations()
+
+  const getFreshData = () => {
+    try {
+      refresh()
+      getCashPayments()
+    } catch (error) {
+    }
+  }
+
   useEffect(() => {
     if (!isOffline) {
       getSyncStats().then((stats) => {
+        if (pending > 0 && stats.pending === 0) {
+          getFreshData()
+        }
         dispatch(setPending(stats.pending));
       }).catch((error) => {
         console.log("error", error);
@@ -31,7 +46,7 @@ const OfflineIndicator: React.FC = () => {
           <Text style={styles.pendingMessageText}>
             Sincronizando... ({pending} pendientes)
           </Text>
-          
+
         </View>
       </View>
     )

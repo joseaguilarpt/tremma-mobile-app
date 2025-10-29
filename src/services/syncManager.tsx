@@ -1,22 +1,39 @@
 import { expoSQLiteService } from '../database/expoSQLiteService';
-import { RootState, store } from '../store';
-import { setSyncing, setLastSyncTime, setSyncProgress } from '../store/slices/syncSlice';
+import { store } from '../store';
 import * as ordersApi from '@/api/orders';
 import * as paymentsApi from '@/api/payments';
-import * as paymentMethodsApi from '@/api/paymentMethods';
 import * as orderReturnsApi from '@/api/orderReturns';
 import * as messagesApi from '@/api/communication';
-import * as usersApi from '@/api/users';
 import * as filesApi from '@/api/files';
 import { setPending } from '@/store/slices/offlineSlice';
 import * as FileSystem from 'expo-file-system';
-import { useSelector } from 'react-redux';
-import { toLowerCaseKeys } from '@/utils';
 
 class SyncManager {
   private isRunning = false;
   private syncInterval: ReturnType<typeof setInterval> | null = null;
   private lastSyncTimes: { [key: string]: number } = {};
+
+  // Método simple de retry
+  private async retryOperation<T>(
+    operation: () => Promise<T>, 
+    maxRetries: number = 3,
+    delay: number = 1000
+  ): Promise<T> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        console.log(`❌ Intento ${attempt}/${maxRetries} falló:`, error.message);
+        
+        if (attempt === maxRetries) {
+          throw error; // Último intento falló
+        }
+        
+        // Esperar antes del siguiente intento
+        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+      }
+    }
+  }
   // Sincronizar todos los datos
   public async syncAllData(): Promise<void> {
     // Verificar que las tablas estén inicializadas
@@ -68,35 +85,47 @@ class SyncManager {
   private async processOrderOperation(operation: string, data: any, queueId: string): Promise<void> {
     switch (operation) {
       case "MARK_ORDER_AS_COMPLETED":
-        await expoSQLiteService.updateOrder(data.id || data.Id, { completado: true, is_synced: 1 }, "MARK_ORDER_AS_COMPLETED");
+        console.log("Mark order as completed:", data.Id, data)
+        await expoSQLiteService.updateOrder(data.id || data.Id, { estado: "Completado", completado: true, is_synced: 1 }, "MARK_ORDER_AS_COMPLETED");
         await this.updateSyncQueue(queueId);
         break;
       case "MARK_ORDER_AS_LOADED":
         console.log("Mark order as loaded:", data.Id, data);
-        await ordersApi.confirmOrderAssignment({ Id: data.roadmap_id, orders: [data.Id] })
+        await this.retryOperation(async () => {
+          await ordersApi.confirmOrderAssignment({ Id: data.roadmap_id, orders: [data.Id] });
+        });
         await this.updateSyncQueue(queueId);
         break;
       case "MARK_ORDER_AS_NOT_LOADED":
-        await ordersApi.rejectOrderAssignment({
-          motivo: data.motivo,
-          Id: data.roadmap_id,
-          orders: [data.id || data.Id],
+        console.log("Mark order as not loaded:", data.Id, data);
+        await this.retryOperation(async () => {
+          await ordersApi.rejectOrderAssignment({
+            motivo: data.motivo,
+            Id: data.roadmap_id,
+            orders: [data.id || data.Id],
+          });
         });
         await this.updateSyncQueue(queueId);
         break;
       case "MARK_ORDER_AS_INVALIDATED":
-        await ordersApi.invalidateOrderAssignment({
-          motivo: data.motivo,
-          Id: data.roadmap_id,
-          orders: [data.id || data.Id],
+        console.log("Mark order as invalidated:", data.Id, data);
+        await this.retryOperation(async () => {
+          await ordersApi.invalidateOrderAssignment({
+            motivo: data.motivo,
+            Id: data.roadmap_id,
+            orders: [data.id || data.Id],
+          });
         });
         await this.updateSyncQueue(queueId);
         break;
       case "MOVE_ORDER":
-        await ordersApi.putMoveOrdersInSameRoadmap({
-          hojaRutaId: data.roadmap_id,
-          pedidoId: data.id || data.Id,
-          secuencia: data.secuencia ?? 1,
+        console.log("Move Order:", data.Id, data);
+        await this.retryOperation(async () => {
+          await ordersApi.putMoveOrdersInSameRoadmap({
+            hojaRutaId: data.roadmap_id,
+            pedidoId: data.id || data.Id,
+            secuencia: data.secuencia ?? 1,
+          });
         });
         await this.updateSyncQueue(queueId);
         break;
@@ -106,7 +135,10 @@ class SyncManager {
   private async processRoadmapOperation(operation: string, data: any, queueId: string): Promise<void> {
     switch (operation) {
       case "START_ROADMAP":
-        await ordersApi.startRoadmap({ Id: data.id || data.Id || data.roadmap_id });
+        console.log("Start Roadmap:", data.Id, data);
+        await this.retryOperation(async () => {
+          await ordersApi.startRoadmap({ Id: data.id || data.Id || data.roadmap_id });
+        });
         await this.updateSyncQueue(queueId);
         break;
     }
@@ -117,38 +149,44 @@ class SyncManager {
     switch (operation) {
       case "CREATE_PAYMENT":
         try {
-          const payload: any = {
-            "metodoPago": { "descripcion": data.metodo_pago_descripcion, "id": data.metodo_pago_id },
-            "monto": data.monto,
-            "observaciones": data.observaciones,
-            "pedidoId": data.pedido_id,
-            "usuario": data.usuario,
-            "comprobante": data.comprobante,
-          }
-          if (data.imagen) {
-            const image = await expoSQLiteService.getImageById(data.imagen);
-            
-            // Convertir base64 a formato de archivo temporal
-            const tempUri = `${FileSystem.cacheDirectory}temp_${image.image_name}`;
-            await FileSystem.writeAsStringAsync(tempUri, image.image_data, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-            
-            // Crear objeto de archivo compatible con postFile
-            const fileObject = {
-              uri: tempUri,
-              name: image.image_name,
-              type: image.image_type,
-            };
-            
-            const imageId = await filesApi.postFile(fileObject, image.container_name);
-            
-            // Limpiar archivo temporal
-            await FileSystem.deleteAsync(tempUri, { idempotent: true });
-            
-            payload.imagen = imageId;
-          }
-          await paymentsApi.postPayment(payload);
+          console.log("Create Payment:", data);
+          await this.retryOperation(async () => {
+            const payload: any = {
+              "metodoPago": { "descripcion": data.metodo_pago_descripcion, "id": data.metodo_pago_id },
+              "monto": data.monto,
+              "observaciones": data.observaciones,
+              "pedidoId": data.pedido_id,
+              "usuario": data.usuario,
+              "comprobante": data.comprobante,
+            }
+            if (data.imagen) {
+              const image = await expoSQLiteService.getImageById(data.imagen);
+              
+              // Convertir base64 a formato de archivo temporal
+              const tempUri = `${FileSystem.cacheDirectory}temp_${image.image_name}`;
+              await FileSystem.writeAsStringAsync(tempUri, image.image_data, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              
+              // Crear objeto de archivo compatible con postFile
+              const fileObject = {
+                uri: tempUri,
+                name: image.image_name,
+                type: image.image_type,
+              };
+              
+              console.log("Create Payment Image:", data);
+
+              const imageId = await filesApi.postFile(fileObject, image.container_name);
+              
+              // Limpiar archivo temporal
+              await FileSystem.deleteAsync(tempUri, { idempotent: true });
+              
+              payload.imagen = imageId;
+            }
+            await paymentsApi.postPayment(payload);
+          }, 5, 2000); // 5 intentos, 2 segundos base para pagos
+          
           await expoSQLiteService.deletePaymentById(data.id || data.Id, "DELETE_PAYMENT", false);
           await this.updateSyncQueue(queueId);
         } catch (error) {
@@ -156,12 +194,21 @@ class SyncManager {
         }
         break;
       case "DELETE_PAYMENT":
+        try {
+          await this.retryOperation(async () => {
+            await paymentsApi.deletePaymentById({ id: data.id || data.Id });
+          });
+        } catch (error) {
+          
+        }
         await expoSQLiteService.deletePaymentById(data.id || data.Id, "DELETE_PAYMENT", false);
-        await paymentsApi.deletePaymentById({ id: data.id || data.Id });
         await this.updateSyncQueue(queueId);
         break;
       case "UPDATE_PAYMENT":
-        await paymentsApi.putPaymentById(data);
+        console.log("Update Payment:", data);
+        await this.retryOperation(async () => {
+          await paymentsApi.putPaymentById(data);
+        });
         await this.updateSyncQueue(queueId);
         break;
     }
@@ -171,22 +218,30 @@ class SyncManager {
   private async processMessageOperation(operation: string, data: any, id: string): Promise<void> {
     switch (operation) {
       case "CONFIRM_COMMUNICATION":
-        await messagesApi.deleteConfirmCommunication(data.id);
+        console.log("Confirm Communication:", data);
+
+        await this.retryOperation(async () => {
+          await messagesApi.deleteConfirmCommunication(data.id);
+        });
         await expoSQLiteService.deleteMessage(data.id);
         await this.updateSyncQueue(id);
         break;
       case "CREATE_MESSAGE":
-        const payload = {
-          userEnvia: data.userEnvia,
-          userRecibe: data.userRecibe,
-          asunto: data.asunto,
-          fecha: data.fecha,
-          descripcion: data.descripcion,
-          confirmado: false,
-        };
-        
-        await messagesApi.postUserMessage(payload);
-         await this.updateSyncQueue(id);
+        console.log("Create Communication:", data);
+
+        await this.retryOperation(async () => {
+          const payload = {
+            userEnvia: data.userEnvia,
+            userRecibe: data.userRecibe,
+            asunto: data.asunto,
+            fecha: data.fecha,
+            descripcion: data.descripcion,
+            confirmado: false,
+          };
+          
+          await messagesApi.postUserMessage(payload);
+        });
+        await this.updateSyncQueue(id);
         break;
     }
   }
@@ -195,7 +250,11 @@ class SyncManager {
   private async processReturnOperation(operation: string, data: any, id: string): Promise<void> {
     switch (operation) {
       case "CLOSE_RETURN":
-        await orderReturnsApi.closeOrderReturn({ id: data.return_id, descripcion: data.observaciones });
+        console.log("Close Return:", data);
+
+        await this.retryOperation(async () => {
+          await orderReturnsApi.closeOrderReturn({ id: data.return_id, descripcion: data.observaciones });
+        });
         await this.updateSyncQueue(id);
         break;
     }

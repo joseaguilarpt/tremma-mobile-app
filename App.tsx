@@ -12,9 +12,21 @@ import { ReduxProvider } from "@/providers/ReduxProvider";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useAutoSync } from "@/hooks/useAutoSync";
 import OfflineIndicator from "@/components/OfflineIndicator";
+import { View } from "react-native";
+import { useRoadmap } from "@/context/roadmap";
+
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+
+function AsyncContainer () {
+  const { refresh } = useRoadmap()
+    // Inicializar sincronización automática
+    useAutoSync(refresh);
+  return (
+    <View></View>
+  )
+}
 
 function AppContent() {
   const [appIsReady, setAppIsReady] = React.useState(false);
@@ -25,8 +37,6 @@ function AppContent() {
   // Inicializar el hook de estado de red
   useNetworkStatus();
   
-  // Inicializar sincronización automática
-  useAutoSync();
 
   React.useEffect(() => {
     async function prepare() {
@@ -54,6 +64,7 @@ function AppContent() {
       <Router />
       <StatusBar style="auto" />
       <ThemedView onLayout={onLayoutRootView} />
+      <AsyncContainer />
       <OfflineIndicator />
     </AppProviders>
   );

@@ -23,7 +23,7 @@ function Orders({
   const [selectedOrder, setSelectedOrder] = React.useState(null);
 
   const { orders, roadmap } = useRoadmap();
-  
+
   const openSheet = useCallback(() => {
     bottomSheetRef.current?.present();
   }, []);
@@ -36,6 +36,7 @@ function Orders({
     setSelectedOrder(order);
     openSheet();
   };
+
   return (
     <ProtectedRoute>
       <ScrollView>
@@ -63,12 +64,27 @@ function Orders({
           <Spacer size={16} />
           <View>
             {orders.map((order) => (
-              <OrderCard
-                onClick={handleClick}
-                key={order.Numero}
-                order={order}
-                color="rgb(18, 86, 107)"
-              />
+              <View key={order.Numero}
+              >
+                <OrderCard
+                  onClick={handleClick}
+                  key={order.Numero}
+                  order={order}
+                  color="rgb(18, 86, 107)"
+                />
+                {order.Devoluciones.map((devolucion) => (
+                  <View key={devolucion.Id} style={{ paddingLeft: 30 }}>
+
+                    <OrderCard
+                      onClick={() => {}}
+                      key={devolucion.Numero}
+                      order={{ ...devolucion, Estado: "Devolución" }}
+                      color="rgb(18, 86, 107)"
+                      disabled={true}
+                    />
+                  </View>
+                ))}
+              </View>
             ))}
           </View>
         </View>

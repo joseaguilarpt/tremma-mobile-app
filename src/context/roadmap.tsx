@@ -8,18 +8,20 @@ import { useAuth } from "./auth";
 import { useExpoSQLiteOperations } from "@/hooks/useExpoSQLiteOperations";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { expoSQLiteService } from "@/database/expoSQLiteService";
+import { getTotalPaymentByRoadmap } from "@/api/payments";
 
 const RoadmapContext = React.createContext(null);
 
 export const RoadmapProvider = ({ children }) => {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [roadmap, setRoadmap] = React.useState<Roadmap | any>(null);
+  const [efectivo, setEfectivo] = React.useState(0);
   const [order, setOrder] = React.useState<Order | any>({});
   const [paymentMethods, setPaymentMethods] = React.useState([]);
   const [clientIdsList, setClientIdsList] = React.useState([]);
   const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
 
+  const pendingSync = useSelector((state: RootState) => state.offline.pending);
   const { getRoadmap, createReturns, recreateTables, getUsers, getOrders, startRoadmap, getPayments, getPaymentMethods, getOrderById, postClientsList, getClientById, getPaymentConditions } = useExpoSQLiteOperations()
   //  AsyncStorage.removeItem("loaded-orders")
   //   AsyncStorage.removeItem("active-roadmap")
@@ -112,7 +114,7 @@ export const RoadmapProvider = ({ children }) => {
         orders: ordersWithReturns,
         roadmap: response,
         blockedOrders: (response?.Pedidos ?? []).filter(
-          (item) => item.Bloqueado
+          (item) => item.Bloqueado || item.bloqueado === 1
         ),
       };
     } catch (error) {
@@ -144,6 +146,16 @@ export const RoadmapProvider = ({ children }) => {
       console.error("Error posting clients list:", error);
     }
   }
+
+  const getCashPayments = async () => {
+    try {
+      const resp = await getTotalPaymentByRoadmap({
+        hojaRutaId: roadmap?.Id,
+        metodoPagoId: 1,
+      });
+      setEfectivo(resp);
+    } catch (error) { }
+  };
 
   const getListData = async () => {
     try {
@@ -226,15 +238,14 @@ export const RoadmapProvider = ({ children }) => {
   }, [clientIdsList]);
 
   React.useEffect(() => {
-    if (user?.id && !roadmap) {
+    if (user?.id && !roadmap && pendingSync === 0) {
       fetchData();
       getListData();
     }
 
-    // Solo ejecutar el intervalo si no hay roadmap cargado Y no hay operaciones en curso
+    // Solo ejecutar el intervalo si no hay operaciones en curso
     const interval = setInterval(() => {
-      console.log("Fetching roadmap data...");
-      if (user?.id && !roadmap) {
+      if (user?.id && pendingSync === 0) {
         fetchData();
       }
     }, 30 * 1000); // Aumentar a 30 segundos para reducir frecuencia
@@ -250,6 +261,7 @@ export const RoadmapProvider = ({ children }) => {
       setRoadmap,
       refresh: fetchData,
       order,
+      efectivo,
       setOrder,
       fetchOrder,
       paymentMethods,
@@ -258,6 +270,7 @@ export const RoadmapProvider = ({ children }) => {
       blockedOrders,
       addPayment: handleSavePayment,
       getStorageOrders,
+      getCashPayments,
       fetchPayments,
       onStartRoadmap,
     }),
@@ -272,6 +285,7 @@ export const RoadmapProvider = ({ children }) => {
       fetchData,
       setOrder,
       onStartRoadmap,
+      efectivo,
     ]
   );
   return (

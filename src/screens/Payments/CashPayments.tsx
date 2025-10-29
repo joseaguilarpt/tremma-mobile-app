@@ -88,12 +88,12 @@ export function CashPayments() {
     }
     try {
       if (isOffline) {
-        await markOrderAsCompleted(roadmap.id, order);
+        await markOrderAsCompleted(roadmap.id || roadmap.Id, order);
       }
       await refresh();
       navigator.reset({
         index: 0,
-        routes: [{ name: "OnGoingOrders", params: { id: roadmap.id } }],
+        routes: [{ name: "OnGoingOrders", params: { id: roadmap.id || roadmap.Id } }],
       });
     } catch (error) {
       console.error(error);

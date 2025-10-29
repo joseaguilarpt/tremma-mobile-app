@@ -1,14 +1,15 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { syncManager } from '../services/syncManager';
 import { expoSQLiteService } from '../database/expoSQLiteService';
 
-export const useAutoSync = () => {
+export const useAutoSync = (cb: () => void) => {
   const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const isConnected = !isOffline;
   const [tablesInitialized, setTablesInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const hasSyncedRef = useRef(false);
 
   // Verificar estado de inicialización de tablas
   const checkTablesInitialization = useCallback(async () => {
@@ -26,14 +27,22 @@ export const useAutoSync = () => {
   }, []);
 
   // Sincronizar automáticamente cuando se conecte
-  const handleConnectionChange = async () => {
+  const handleConnectionChange = useCallback(async () => {
+    // Si ya se sincronizó, no hacerlo de nuevo
+    if (hasSyncedRef.current) {
+      return;
+    }
+
     if (isConnected && tablesInitialized) {
       console.log('🌐 Conexión detectada, iniciando sincronización...');
+      hasSyncedRef.current = true;
       try {
         await syncManager.syncNow();
         console.log('✅ Sincronización automática completada');
+        cb()
       } catch (error) {
         console.error('❌ Error en sincronización automática:', error);
+        hasSyncedRef.current = false; // Resetear en caso de error para permitir reintentar
       }
     } else if (isConnected && !tablesInitialized) {
       console.log('⏳ Esperando inicialización de tablas antes de sincronizar...');
@@ -42,15 +51,18 @@ export const useAutoSync = () => {
       if (tablesReady) {
         setTablesInitialized(true);
         console.log('🌐 Tablas inicializadas, iniciando sincronización...');
+        hasSyncedRef.current = true;
         try {
           await syncManager.syncNow();
           console.log('✅ Sincronización automática completada');
+          cb();
         } catch (error) {
           console.error('❌ Error en sincronización automática:', error);
+          hasSyncedRef.current = false; // Resetear en caso de error para permitir reintentar
         }
       }
     }
-  }
+  }, [isConnected, tablesInitialized]);
 
   // Efecto para verificar inicialización de tablas al montar el componente
   useEffect(() => {
@@ -62,7 +74,11 @@ export const useAutoSync = () => {
     if (isConnected && !isInitializing) {
       handleConnectionChange();
     }
-  }, [isConnected, tablesInitialized, isInitializing]);
+    // Resetear el flag cuando se desconecta
+    if (!isConnected) {
+      hasSyncedRef.current = false;
+    }
+  }, [isConnected, isInitializing, handleConnectionChange]);
 
   // Sincronización manual
   const syncNow = useCallback(async () => {

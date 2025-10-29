@@ -71,6 +71,29 @@ export default function NewPaymentSheet({
 
   const { createPayment, updatePayment , postImage } = useExpoSQLiteOperations();
 
+  function parseAmount(value: string | number): number {
+    if (typeof value === 'number') return value;
+    if (!value) return 0;
+
+    let v = value.replace(/\s/g, '');
+
+    const hasDot = v.includes('.');
+    const hasComma = v.includes(',');
+
+    if (hasDot && hasComma) {
+      // “1.234,56” → decimal = “,”
+      v = v.replace(/\./g, '').replace(',', '.');
+    } else if (hasComma && !hasDot) {
+      // “1234,56” → decimal = “,”
+      v = v.replace(',', '.');
+    } else {
+      // “1234.56” o “1234”
+    }
+
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
   const handleSave = async () => {
     try {
       let err = {};
@@ -106,7 +129,7 @@ export default function NewPaymentSheet({
       const payload = {
         ...(currentPayment ?? {}),
         pedidoId: order?.Id,
-        monto: formState?.MontoCancelado,
+        monto: parseAmount(formState?.MontoCancelado),
         comprobante: formState?.Referencia,
         usuario: user.username,
       };

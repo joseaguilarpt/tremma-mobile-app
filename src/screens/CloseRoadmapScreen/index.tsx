@@ -52,7 +52,7 @@ function CloseRoadmap({ id }: { id: string }) {
   const { user } = useAuth();
   const params = route.params as { [key: string]: string | number };
   const { setLoading, isLoading } = useLoading();
-  const { roadmap, refresh, orders } = useRoadmap();
+  const { roadmap, refresh, getCashPayments, efectivo } = useRoadmap();
   const [errors, setErrors] = React.useState<{[key: string]: string | null}>({});
   const { showSnackbar } = useNotifications();
   const { recreateTables } = useExpoSQLiteOperations();
@@ -70,18 +70,26 @@ function CloseRoadmap({ id }: { id: string }) {
     ComprobanteLocal: false,
   });
 
-  useEffect(() => {
-    const fetchCashPayments = async () => {
-      try {
-        const resp = await getTotalPaymentByRoadmap({
-          hojaRutaId: roadmap?.Id,
-          metodoPagoId: 1,
-        });
-        setFormState((prev) => ({ ...prev, Efectivo: resp || 0 }));
-      } catch (error) { }
-    };
-    fetchCashPayments();
+  const getPaymentsData = () => {
+    getCashPayments()
     getLocal();
+  }
+
+  useEffect(() => {
+    if (efectivo) {
+      setFormState((prev) => ({ ...prev, Efectivo: efectivo }));
+    }
+  }, [efectivo]);
+
+  useEffect(() => {
+    if (!isOffline) {
+      refresh()
+      getPaymentsData()
+    }
+  }, [isOffline])
+
+  useEffect(() => {
+    getPaymentsData()
   }, []);
 
   const data = [
