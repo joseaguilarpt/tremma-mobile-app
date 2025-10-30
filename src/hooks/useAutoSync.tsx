@@ -3,9 +3,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { syncManager } from '../services/syncManager';
 import { expoSQLiteService } from '../database/expoSQLiteService';
+import { useAuth } from '@/context/auth';
 
 export const useAutoSync = (cb: () => void) => {
   const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
+  const { user} = useAuth()
+  const isLoggedIn = user?.id;
   const isConnected = !isOffline;
   const [tablesInitialized, setTablesInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -28,6 +31,7 @@ export const useAutoSync = (cb: () => void) => {
 
   // Sincronizar automáticamente cuando se conecte
   const handleConnectionChange = useCallback(async () => {
+    if (!isLoggedIn) return;
     // Si ya se sincronizó, no hacerlo de nuevo
     if (hasSyncedRef.current) {
       return;
@@ -62,7 +66,7 @@ export const useAutoSync = (cb: () => void) => {
         }
       }
     }
-  }, [isConnected, tablesInitialized]);
+  }, [isConnected, tablesInitialized, isLoggedIn]);
 
   // Efecto para verificar inicialización de tablas al montar el componente
   useEffect(() => {
@@ -78,7 +82,7 @@ export const useAutoSync = (cb: () => void) => {
     if (!isConnected) {
       hasSyncedRef.current = false;
     }
-  }, [isConnected, isInitializing, handleConnectionChange]);
+  }, [isConnected, isInitializing, handleConnectionChange, isLoggedIn]);
 
   // Sincronización manual
   const syncNow = useCallback(async () => {

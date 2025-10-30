@@ -94,16 +94,20 @@ export const useExpoSQLiteOperations = () => {
   }, [isOffline]);
 
   const mergeOrders = (orders = [], dbOrders = []) => {
+    if (!Array.isArray(orders)) return [];
+    const safeDbOrders = Array.isArray(dbOrders) ? dbOrders : [];
     return orders.map((order) => {
-      const existent = dbOrders.find((item) => order?.Id === item?.Id || order?.Id === item?.id)
+      if (!order) return order;
+      const existent = safeDbOrders.find((item) => (order?.Id ?? order?.id) === (item?.Id ?? item?.id));
       if (existent) {
         return {
           ...order,
-          Estado: existent.Estado || order.Estado
-        }
+          Estado: existent?.Estado ?? order?.Estado,
+          estado: existent?.estado ?? order?.estado,
+        };
       }
-      return existent;
-    }) 
+      return order;
+    });
   }
 
 
@@ -135,7 +139,9 @@ export const useExpoSQLiteOperations = () => {
           return await expoSQLiteService.getRoadmapWithOrders();
         } else {
           const roadmapData = await ordersApi.getCurrentRoadmap();
-          await expoSQLiteService.processAndSaveRoadmap(roadmapData);
+          if (roadmapData) {
+            await expoSQLiteService.processAndSaveRoadmap(roadmapData);
+          }
           return roadmapData;
         }
       } catch (retryError) {

@@ -7,11 +7,13 @@ import { useExpoSQLiteOperations } from '@/hooks/useExpoSQLiteOperations';
 import { setPending } from '@/store/slices/offlineSlice';
 import { useRoadmap } from '@/context/roadmap';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '@/context/auth';
 
 const OfflineIndicator: React.FC = () => {
   const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const route = useNavigation();
   const pending = useSelector((state: RootState) => state.offline.pending);
+  const { user } = useAuth()
   const { refresh, getCashPayments } = useRoadmap()
   const dispatch = useDispatch();
   const { getSyncStats } = useExpoSQLiteOperations()
@@ -25,7 +27,7 @@ const OfflineIndicator: React.FC = () => {
   }
 
   useEffect(() => {
-    if (!isOffline) {
+    if (!isOffline && user?.id) {
       getSyncStats().then((stats) => {
         if (pending > 0 && stats.pending === 0) {
           getFreshData()
@@ -35,7 +37,7 @@ const OfflineIndicator: React.FC = () => {
         console.log("error", error);
       });
     }
-  }, [isOffline]);
+  }, [isOffline, user]);
 
   if (!isOffline && pending > 0) {
     return (
