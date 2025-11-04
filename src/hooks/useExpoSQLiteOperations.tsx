@@ -179,7 +179,7 @@ export const useExpoSQLiteOperations = () => {
     if (!isOffline) {
       await paymentsApi.postPayment(paymentData);
     }
-    return await expoSQLiteService.createPayment({ ...paymentData, isSynced: isOffline ? 0 : 1 }, "CREATE_PAYMENT");
+    return await expoSQLiteService.createPayment({ ...paymentData, isSynced: isOffline ? 0 : 1 }, "CREATE_PAYMENT", isOffline);
 
   }, [isOffline]);
 

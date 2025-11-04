@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   CommonActions,
@@ -31,18 +31,19 @@ export default function OnGoingScreen() {
   const navigator = useNavigation<any>();
   const { setLoading } = useLoading();
   const { showSnackbar } = useNotifications();
-  const { orders, roadmap, refresh, setOrders } = useRoadmap();
+  const { orders, roadmap, refresh, setOrders, initialized } = useRoadmap();
   const [isOpenMap, setIsOpenMap] = React.useState(false);
 
   const { moveOrdersInSameRoadmap } = useExpoSQLiteOperations();
   const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const handleCheckOrders = useCallback(() => {
-    if (orders.length === 0) {
+    if (orders.length === 0 && initialized) {
       navigator.navigate("CloseRoadmap", {
         id: roadmap?.Id,
       });
     }
-  }, []);
+  }, [orders, initialized]);
+
 
   useFocusEffect(handleCheckOrders);
 

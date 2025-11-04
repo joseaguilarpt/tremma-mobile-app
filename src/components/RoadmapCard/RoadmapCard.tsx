@@ -11,13 +11,14 @@ const RoadmapCard = ({ roadmap, color = "rgb(18, 86, 107)" }) => {
 
   const handleNavigate = async () => {
     const activeRoadmap = await AsyncStorage.getItem("active-roadmap");
+
     if (String(roadmap.Id) !== String(activeRoadmap)) {
       await AsyncStorage.removeItem("active-roadmap");
       navigator.navigate("Roadmap", { id: roadmap.Numero, ...roadmap });
     } else if (
       activeRoadmap &&
       String(roadmap.Id) === String(activeRoadmap) &&
-      orders.length > 0
+      roadmap?.Pedidos?.length > 0
     ) {
       navigator.navigate("OnGoingOrders", { id: roadmap.Numero });
     } else {

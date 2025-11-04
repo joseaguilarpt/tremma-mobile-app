@@ -13,6 +13,7 @@ import { getTotalPaymentByRoadmap } from "@/api/payments";
 const RoadmapContext = React.createContext(null);
 
 export const RoadmapProvider = ({ children }) => {
+  const [initialized, setInitialized] = React.useState(false);
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [roadmap, setRoadmap] = React.useState<Roadmap | any>(null);
   const [efectivo, setEfectivo] = React.useState(0);
@@ -28,7 +29,7 @@ export const RoadmapProvider = ({ children }) => {
   //   recreateTables()
   const [payments, setPayments] = React.useState([]);
   const [blockedOrders, setBlockedOrders] = React.useState([]);
-  const { setLoading } = useLoading();
+  const { setLoading, isLoading } = useLoading();
   const { showSnackbar } = useNotifications();
   const { user } = useAuth();
 
@@ -60,6 +61,9 @@ export const RoadmapProvider = ({ children }) => {
   };
 
   const fetchData = async () => {
+    if (!initialized) {
+      setLoading(true);
+    }
     try {
 
       const response = await getRoadmap();
@@ -124,6 +128,7 @@ export const RoadmapProvider = ({ children }) => {
         blockedOrders: [],
       };
     } finally {
+      setInitialized(true);
       setLoading(false);
     }
   };
@@ -262,6 +267,7 @@ export const RoadmapProvider = ({ children }) => {
       refresh: fetchData,
       order,
       efectivo,
+      initialized,
       setOrder,
       fetchOrder,
       paymentMethods,
@@ -283,6 +289,7 @@ export const RoadmapProvider = ({ children }) => {
       blockedOrders,
       fetchOrder,
       fetchData,
+      initialized,
       setOrder,
       onStartRoadmap,
       efectivo,

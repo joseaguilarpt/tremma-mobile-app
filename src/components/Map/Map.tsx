@@ -116,12 +116,45 @@ function getRegionForCoordinates(points) {
   return { latitude, longitude, latitudeDelta, longitudeDelta };
 }
 
-export default function OrdersMap({ isOpen, closeModal, orders }) {
+// Función helper para comparar arrays de orders por contenido
+const areOrdersEqual = (orders1: Order[] | null | undefined, orders2: Order[] | null | undefined): boolean => {
+  if (orders1 === orders2) return true;
+  if (!orders1 || !orders2) return false;
+  if (orders1.length !== orders2.length) return false;
+
+  // Comparar cada order por su Id y Numero
+  for (let i = 0; i < orders1.length; i++) {
+    const order1 = orders1[i];
+    const order2 = orders2[i];
+    
+    if (
+      order1.Id !== order2.Id ||
+      order1.Numero !== order2.Numero ||
+      order1.Latitud !== order2.Latitud ||
+      order1.Longitud !== order2.Longitud ||
+      order1.Secuencia !== order2.Secuencia
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+function OrdersMap({ isOpen, closeModal, orders = [] }) {
   const [selectedMarker, setSelectedMarker] = React.useState(null);
   const [routeCoords, setRouteCoords] = React.useState([]);
   const [userLocation, setUserLocation] = React.useState(null);
 
   const { showSnackbar } = useNotifications();
+  
+  // Crear una clave única basada en el contenido de las orders para comparación
+  const ordersKey = useMemo(() => {
+    if (!orders || orders.length === 0) return "";
+    return orders.map(o => `${o.Id}-${o.Numero}-${o.Latitud}-${o.Longitud}-${o.Secuencia}`).join("|");
+  }, [orders]);
+  
+  // Memoizar points solo cuando ordersKey o userLocation cambien realmente
   const points = useMemo(() => {
     const orderPoints = ((orders ?? []) as Order[]).map((item) => ({
       id: item.Numero,
@@ -151,7 +184,7 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
       ];
     }
     return orderPoints;
-  }, [orders, userLocation]);
+  }, [ordersKey, userLocation]);
 
   const region = useMemo(() => getRegionForCoordinates(points), [points]);
 
@@ -171,10 +204,10 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
   }, []);
 
   useEffect(() => {
-    if (points.length >= 2) {
+    if (points.length >= 2 && isOpen) {
       fetchRoute(points);
     }
-  }, [points]);
+  }, [points, isOpen]);
 
   const fetchRoute = async (points) => {
     try {
@@ -193,6 +226,7 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
 
     const response = await fetch(url);
     const json = await response.json();
+    console.log(json)
     if (json.routes.length) {
       const encoded = json.routes[0].overview_polyline.points;
       const decoded = decodePolyline(encoded);
@@ -223,7 +257,7 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
           {points.map((marker, index) => (
             <Marker
               onPress={() => setSelectedMarker(marker)}
-              key={index ?? marker.id ?? marker.key}
+              key={marker.id ?? index}
               coordinate={marker.coordinate}
             >
               <View style={styles.customMarker}>
@@ -301,6 +335,18 @@ export default function OrdersMap({ isOpen, closeModal, orders }) {
     </Modal>
   );
 }
+
+// Función de comparación personalizada para React.memo
+const arePropsEqual = (prevProps, nextProps) => {
+  // Comparar isOpen y closeModal
+  if (prevProps.isOpen !== nextProps.isOpen) return false;
+  if (prevProps.closeModal !== nextProps.closeModal) return false;
+  
+  // Comparar orders por contenido usando la función helper
+  return areOrdersEqual(prevProps.orders, nextProps.orders);
+};
+
+export default React.memo(OrdersMap, arePropsEqual);
 
 const styles = StyleSheet.create({
   details: {
