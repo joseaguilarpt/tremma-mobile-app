@@ -15,14 +15,18 @@ import OfflineIndicator from "@/components/OfflineIndicator";
 import { View } from "react-native";
 import { useRoadmap } from "@/context/roadmap";
 
-
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 function AsyncContainer () {
-  const { refresh } = useRoadmap()
+  const { refresh, getCashPayments } = useRoadmap()
+  
+  const refreshData = () => {
+    refresh()
+    getCashPayments()
+  }
     // Inicializar sincronización automática
-    useAutoSync(refresh);
+  useAutoSync(refreshData);
   return (
     <View></View>
   )

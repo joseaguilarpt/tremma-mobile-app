@@ -117,7 +117,7 @@ function ReturnDetailsScreen() {
         id: formState?.Id || formState?.id,
         descripcion: formState.Observaciones,
       };
-      await closeReturn(formState?.ReturnId || formState?.id, formState.Observaciones);
+      await closeReturn(formState?.ReturnId ?? formState?.id ?? formState?.Id, formState.Observaciones);
       await refresh();
       showSnackbar("Devolución actualizada exitosamente.", "success");
 

@@ -15,7 +15,6 @@ import OrdersMap from "@/components/Map/Map";
 import OrderDetails from "../OrderDetails";
 import OrderPayments from "../Payments";
 import { useRoadmap } from "@/context/roadmap";
-import { useNotifications } from "@/context/notification";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 
@@ -26,7 +25,6 @@ export default function OrderDetailsScreen() {
   const route = useRoute();
   const isOffline = useSelector((state: RootState) => state.offline.isOfflineMode);
   const params = route.params as { [key: string]: string | number };
-  const { showSnackbar } = useNotifications();
   const { setLoading } = useLoading();
   const [isOpenMap, setIsOpenMap] = React.useState(false);
 
@@ -38,7 +36,7 @@ export default function OrderDetailsScreen() {
     try {
       await fetchOrder(params.id);
     } catch (error) {
-      showSnackbar("Error al cargar el pedido, intente nuevamente.", "error");
+     // showSnackbar("Error al cargar el pedido, intente nuevamente.", "error");
     } finally {
       setLoading(false);
     }
