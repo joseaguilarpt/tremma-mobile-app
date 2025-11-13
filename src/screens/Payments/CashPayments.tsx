@@ -87,6 +87,8 @@ export function CashPayments() {
       return;
     }
     try {
+      setLoading(true);
+
       await markOrderAsCompleted(roadmap.id || roadmap.Id, order);
       await refresh();
       navigator.reset({
