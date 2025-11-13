@@ -52,6 +52,9 @@ export function AuthProvider({
   const login = async (email: string, password: string) => {
     try {
       const userData = await loginApi({ email, password });
+      if (!userData?.user?.original?.Tercerizado && !userData?.user?.original?.Conductor) {
+        throw new Error('not-driver')
+      }
       setUser(userData.user);
       setLoaded(true);
     } catch (error) {
