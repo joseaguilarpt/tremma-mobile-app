@@ -67,6 +67,9 @@ const LoginScreen = () => {
         message =
           "La cuenta está desactivada. Para más información, por favor contacta al soporte.";
       }
+      if (e?.message === "not-driver") {
+        message = 'Error en el inicio de sesión: este usuario no tiene permisos de Conductor / Tercerizado. Por favor, revisa la configuración.'
+      }
       showSnackbar(message, "error");
       setLoading(false);
     }

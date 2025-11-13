@@ -91,9 +91,7 @@ export function CreditPayments() {
 
       await api(payload);
       showSnackbar("Pago actualizado exitosamente.", "success");
-      if (isOffline) {
-        await markOrderAsCompleted(roadmap.id || roadmap.Id, order);
-      } 
+      await markOrderAsCompleted(roadmap.id || roadmap.Id, order);
       await refresh();
       
       navigator.reset({

@@ -125,7 +125,7 @@ function ReturnDetailsScreen() {
         id: roadmap.Id,
       });
     } catch (error) {
-      showSnackbar("Error al actualizar la devolución.", "error");
+      showSnackbar(error?.response?.data?.errors?.Messages?.[0] || error?.message || "Error al actualizar la devolución.", "error");
     }
   };
 

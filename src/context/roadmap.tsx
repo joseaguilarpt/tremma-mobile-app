@@ -250,7 +250,7 @@ export const RoadmapProvider = ({ children }) => {
 
     // Solo ejecutar el intervalo si no hay operaciones en curso
     const interval = setInterval(() => {
-      if (user?.id && pendingSync === 0) {
+      if (user?.id && (pendingSync === 0 || !roadmap)) {
         fetchData();
       }
     }, 30 * 1000); // Aumentar a 30 segundos para reducir frecuencia

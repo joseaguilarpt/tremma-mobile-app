@@ -329,15 +329,13 @@ export const useExpoSQLiteOperations = () => {
   }, [isOffline]);
 
   const closeReturn = useCallback(async (id: string, descripcion: string) => {
-    if (isOffline) {
-      console.log("closeReturn", id, descripcion);
-      return await expoSQLiteService.updateReturn(id, { return_id: id, estado: "Cerrado", observaciones: descripcion, is_synced: isOffline ? 0 : 1 }, "CLOSE_RETURN");
-    } else {
-      return await orderReturnsApi.closeOrderReturn({
+    if (!isOffline) {
+      await orderReturnsApi.closeOrderReturn({
         id,
         descripcion
       });
-    }
+    } 
+    return await expoSQLiteService.updateReturn(id, { return_id: id, estado: "Cerrado", observaciones: descripcion, is_synced: isOffline ? 0 : 1 }, "CLOSE_RETURN");
   }, [isOffline]);
   // Operaciones de Payment Methods
   const createPaymentMethod = useCallback(async (paymentMethodData: any) => {
